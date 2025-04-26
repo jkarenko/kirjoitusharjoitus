@@ -644,6 +644,14 @@ export class UIManager extends EventEmitter {
    * @param drawing - Drawing data to display
    */
   public showExampleDrawing(drawing: DrawingData): void {
+    // Update configuration to reset base constraint box size
+    this.updateConfiguration();
+    // Reset any previous scaling/shrinking animations and state
+    this.cleanupAnimations();
+    // Clear any inline transforms on the constraint box
+    if (this.components.constraintBox) {
+      this.components.constraintBox.style.transform = '';
+    }
     if (this.animation.exampleAnimationInProgress) return;
     this.animation.exampleAnimationInProgress = true;
 
