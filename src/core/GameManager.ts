@@ -97,15 +97,15 @@ export class GameManager {
     // UI Manager events
     // UI Manager events
     this.uiManager.on('create-template-clicked', this.handleCreateExercise);
-    this.uiManager.on('exercise-selected', (exercise: any) => this.handleExerciseSelected(exercise as Exercise));
-    this.uiManager.on('save-exercise-clicked', (data: any) => this.handleSaveExercise(data as { name: string }));
+    this.uiManager.on('exercise-selected', (exercise: unknown) => this.handleExerciseSelected(exercise as Exercise));
+    this.uiManager.on('save-exercise-clicked', (data: unknown) => this.handleSaveExercise(data as { name: string }));
     this.uiManager.on('cancel-exercise-clicked', this.handleCancelExercise);
     this.uiManager.on('done-button-clicked', this.handleDoneButtonClicked);
-    this.uiManager.on('attempt-animation-complete', (attemptNumber: any) => this.handleAttemptAnimationComplete(attemptNumber as number));
+    this.uiManager.on('attempt-animation-complete', (attemptNumber: unknown) => this.handleAttemptAnimationComplete(attemptNumber as number));
     this.uiManager.on('back-to-menu-clicked', this.handleBackToMenu);
     this.uiManager.on('try-again-clicked', this.handleTryAgain);
     this.uiManager.on('back-clicked', this.handleBackToMenu);
-    this.uiManager.on('star-added', (starCount: any) => {
+    this.uiManager.on('star-added', (starCount: unknown) => {
       this.audioManager.playStarSound(starCount as number);
     });
 
