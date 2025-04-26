@@ -95,13 +95,19 @@ export class GameManager {
    */
   private setupEventListeners(): void {
     // UI Manager events
-    // UI Manager events
     this.uiManager.on('create-template-clicked', this.handleCreateExercise);
-    this.uiManager.on('exercise-selected', (exercise: unknown) => this.handleExerciseSelected(exercise as Exercise));
-    this.uiManager.on('save-exercise-clicked', (data: unknown) => this.handleSaveExercise(data as { name: string }));
+    this.uiManager.on('load-template-clicked', this.handleLoadExercise);
+    this.uiManager.on('exercise-selected', (exercise: unknown) =>
+      this.handleExerciseSelected(exercise as Exercise)
+    );
+    this.uiManager.on('save-exercise-clicked', (data: unknown) =>
+      this.handleSaveExercise(data as { name: string })
+    );
     this.uiManager.on('cancel-exercise-clicked', this.handleCancelExercise);
     this.uiManager.on('done-button-clicked', this.handleDoneButtonClicked);
-    this.uiManager.on('attempt-animation-complete', (attemptNumber: unknown) => this.handleAttemptAnimationComplete(attemptNumber as number));
+    this.uiManager.on('attempt-animation-complete', (attemptNumber: unknown) =>
+      this.handleAttemptAnimationComplete(attemptNumber as number)
+    );
     this.uiManager.on('back-to-menu-clicked', this.handleBackToMenu);
     this.uiManager.on('try-again-clicked', this.handleTryAgain);
     this.uiManager.on('back-clicked', this.handleBackToMenu);
@@ -301,7 +307,7 @@ export class GameManager {
     this.audioManager.playAttemptCompleteSound();
 
     // Animate drawing to history
-    this.uiManager.animateDrawingToHistory(this.state.currentAttempt);
+    this.uiManager.animateDrawingToHistory(this.state.currentAttempt, drawingData);
   }
 
   /**

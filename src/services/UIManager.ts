@@ -519,7 +519,7 @@ export class UIManager extends EventEmitter {
     }
 
     // If it's already the current view, do nothing
-    if (this.state.currentView === viewType) return;
+    // if (this.state.currentView === viewType) return;
 
     // Hide all views
     this.components.views.forEach((v, type) => {
@@ -720,7 +720,7 @@ export class UIManager extends EventEmitter {
 
         context.beginPath();
         context.strokeStyle = stroke.color;
-        context.lineWidth = stroke.width * scale * 0.5;
+        context.lineWidth = 3;
         context.lineCap = 'round';
         context.lineJoin = 'round';
 
@@ -761,9 +761,18 @@ export class UIManager extends EventEmitter {
           const exampleItem = document.createElement('div');
           exampleItem.className = 'history-item example-item';
 
-          // Clone the canvas
-          const clonedCanvas = canvas.cloneNode(true) as HTMLCanvasElement;
-          exampleItem.appendChild(clonedCanvas);
+          // Create a new canvas and render the drawing data
+          const historyCanvas = document.createElement('canvas');
+          const historyRect = this.components.historyDisplay.getBoundingClientRect();
+          const targetSize = historyRect.height * 0.8;
+          this.renderDrawingToCanvas(
+            drawing,
+            historyCanvas,
+            targetSize,
+            targetSize,
+            this.config.pixelRatio
+          );
+          exampleItem.appendChild(historyCanvas);
 
           // Add label
           const label = document.createElement('div');
@@ -783,10 +792,67 @@ export class UIManager extends EventEmitter {
   }
 
   /**
+   * Helper to render drawing data to a canvas at any size
+   */
+  private renderDrawingToCanvas(
+    drawing: DrawingData,
+    canvas: HTMLCanvasElement,
+    width: number,
+    height: number,
+    pixelRatio: number
+  ): void {
+    canvas.width = width * pixelRatio;
+    canvas.height = height * pixelRatio;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset any transforms
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(pixelRatio, pixelRatio);
+
+    // Find bounding box
+    let minX = Number.MAX_VALUE,
+      maxX = Number.MIN_VALUE,
+      minY = Number.MAX_VALUE,
+      maxY = Number.MIN_VALUE;
+    for (const stroke of drawing.strokes) {
+      for (const point of stroke.points) {
+        minX = Math.min(minX, point.x);
+        maxX = Math.max(maxX, point.x);
+        minY = Math.min(minY, point.y);
+        maxY = Math.max(maxY, point.y);
+      }
+    }
+    const originalWidth = maxX - minX;
+    const originalHeight = maxY - minY;
+    if (originalWidth === 0 || originalHeight === 0) return;
+    const scale = Math.min((width / originalWidth) * 0.8, (height / originalHeight) * 0.8);
+    const offsetX = (width - originalWidth * scale) / 2;
+    const offsetY = (height - originalHeight * scale) / 2;
+    for (const stroke of drawing.strokes) {
+      if (stroke.points.length < 2) continue;
+      ctx.beginPath();
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      const firstPoint = stroke.points[0];
+      ctx.moveTo(offsetX + (firstPoint.x - minX) * scale, offsetY + (firstPoint.y - minY) * scale);
+      for (let i = 1; i < stroke.points.length; i++) {
+        const point = stroke.points[i];
+        ctx.lineTo(offsetX + (point.x - minX) * scale, offsetY + (point.y - minY) * scale);
+      }
+      ctx.stroke();
+    }
+  }
+
+  /**
    * Animate drawing to history and shrink it
    * @param attemptNumber - Attempt number
+   * @param drawing - Drawing data for the attempt
    */
-  public animateDrawingToHistory(attemptNumber: number): void {
+  public animateDrawingToHistory(attemptNumber: number, drawing: DrawingData): void {
     if (this.animation.attemptAnimationInProgress) return;
 
     this.animation.attemptAnimationInProgress = true;
@@ -869,35 +935,13 @@ export class UIManager extends EventEmitter {
 
         // Create smaller canvas for history
         const historyCanvas = document.createElement('canvas');
-        historyCanvas.width = targetWidth * this.config.pixelRatio;
-        historyCanvas.height = targetHeight * this.config.pixelRatio;
-        historyCanvas.style.width = `${targetWidth}px`;
-        historyCanvas.style.height = `${targetHeight}px`;
-
-        // Draw the attempt on the history canvas
-        const historyContext = historyCanvas.getContext('2d');
-        if (historyContext) {
-          // Scale for device pixel ratio
-          historyContext.scale(this.config.pixelRatio, this.config.pixelRatio);
-
-          // Scale to fit
-          const sourceWidth = originalCanvas.width / this.config.pixelRatio;
-          const sourceHeight = originalCanvas.height / this.config.pixelRatio;
-
-          historyContext.drawImage(
-            originalCanvas,
-            0,
-            0,
-            sourceWidth,
-            sourceHeight,
-            0,
-            0,
-            targetWidth,
-            targetHeight
-          );
-        }
-
-        // Add to history item
+        this.renderDrawingToCanvas(
+          drawing,
+          historyCanvas,
+          targetWidth,
+          targetHeight,
+          this.config.pixelRatio
+        );
         historyItem.appendChild(historyCanvas);
 
         // Add attempt number label
