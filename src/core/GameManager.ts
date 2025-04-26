@@ -162,8 +162,18 @@ export class GameManager {
       '.create-exercise-view .drawing-canvas'
     ) as HTMLCanvasElement;
     if (canvas) {
-      this.drawingManager.setCanvas(canvas);
-      this.drawingManager.enable();
+      // Ensure canvas is sized to its container for correct drawing resolution
+      const parent = canvas.parentElement;
+      if (parent) {
+        const rect = parent.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = rect.width * ratio;
+        canvas.height = rect.height * ratio;
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+        this.drawingManager.setCanvas(canvas);
+        this.drawingManager.enable();
+      }
     }
   }
 
