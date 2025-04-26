@@ -437,7 +437,10 @@ export class GameManager {
     // Clean up UI
     this.uiManager.resetHistoryDisplay();
 
-    // Show example drawing again
+    // Switch to attempt view first so the example container is laid out and measurable
+    this.uiManager.showView('attempt');
+
+    // Show example drawing again (location/scale will be reset)
     this.uiManager.showExampleDrawing(this.state.currentExercise.adultDrawing);
 
     // After animation, start first attempt
@@ -446,9 +449,6 @@ export class GameManager {
       // Remove this one-time listener
       this.uiManager.off('example-animation-complete', this.startNextAttempt);
     });
-
-    // Switch to attempt view
-    this.uiManager.showView('attempt');
   }
 
   /**
