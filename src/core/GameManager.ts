@@ -95,8 +95,8 @@ export class GameManager {
    */
   private setupEventListeners(): void {
     // UI Manager events
-    this.uiManager.on('create-exercise-clicked', this.handleCreateExercise);
-    this.uiManager.on('load-exercise-clicked', this.handleLoadExercise);
+    this.uiManager.on('create-template-clicked', this.handleCreateExercise);
+    this.uiManager.on('load-template-clicked', this.handleLoadExercise);
     this.uiManager.on('exercise-selected', this.handleExerciseSelected);
     this.uiManager.on('save-exercise-clicked', this.handleSaveExercise);
     this.uiManager.on('cancel-exercise-clicked', this.handleCancelExercise);
@@ -147,6 +147,7 @@ export class GameManager {
    * Handle create exercise button click
    */
   private handleCreateExercise(): void {
+    console.log('GameManager: handleCreateExercise - user requested to create new template');
     // Update state
     this.state.isCreatingExercise = true;
 
@@ -170,8 +171,13 @@ export class GameManager {
    * Handle load exercise button click
    */
   private handleLoadExercise(): void {
+    console.log('GameManager: handleLoadExercise - fetching saved templates');
     // Get exercises from storage
     const exercises = this.storageManager.getExercises();
+    console.log(
+      `GameManager: handleLoadExercise - loaded ${exercises.length} templates`,
+      exercises
+    );
 
     // Get thumbnails
     const thumbnails: { [exerciseId: string]: string } = {};
@@ -193,7 +199,10 @@ export class GameManager {
    * Handle exercise selection
    * @param exercise - Selected exercise
    */
-  private handleExerciseSelected(exercise: Exercise): void {
+  public handleExerciseSelected(exercise: Exercise): void {
+    console.log(
+      `GameManager: handleExerciseSelected - starting game for template id=${exercise.id} name="${exercise.name}"`
+    );
     // Update state
     this.state.currentExercise = exercise;
     this.state.currentAttempt = 0;
@@ -442,5 +451,13 @@ export class GameManager {
       width: baseSize * scaleFactor,
       height: baseSize * scaleFactor,
     };
+  }
+
+  /**
+   * Start the game with a specific exercise (template)
+   * @param exercise - Selected exercise
+   */
+  public startGameWithExercise(exercise: Exercise): void {
+    this.handleExerciseSelected(exercise);
   }
 }

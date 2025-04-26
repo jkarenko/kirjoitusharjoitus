@@ -99,10 +99,13 @@ export class UIManager extends EventEmitter {
    * @param container - Container element for the game
    */
   public initialize(container: HTMLElement): void {
+    console.log('UIManager: initialize - starting');
     this.components.container = container;
 
     // Create view elements
+    console.log('UIManager: initialize - creating view elements');
     this.createViewElements();
+    console.log('UIManager: initialize - created views:', Array.from(this.components.views.keys()));
 
     // Set up event listeners
     this.setupEventListeners();
@@ -110,8 +113,15 @@ export class UIManager extends EventEmitter {
     // Configure for current device
     this.updateConfiguration();
 
-    // Show initial view
+    // Reset currentView so that showView('welcome') will always execute
+    (this.state as any).currentView = undefined;
     this.showView('welcome');
+    console.log('UIManager: initialize - forcibly hiding exercise-list view');
+    const listView = this.components.views.get('exercise-list');
+    if (listView) {
+      listView.style.display = 'none';
+      listView.classList.remove('active');
+    }
 
     // Emit initialized event
     this.emit('ui-initialized');
@@ -121,22 +131,29 @@ export class UIManager extends EventEmitter {
    * Create view elements for each game view
    */
   private createViewElements(): void {
+    console.log('UIManager: createViewElements - started');
     if (!this.components.container) return;
 
     // Clear container
     this.components.container.innerHTML = '';
 
     // Create views
+    console.log('UIManager: createViewElements - creating welcome view');
     this.createWelcomeView();
+    console.log('UIManager: createViewElements - creating attempt view');
     this.createAttemptView();
+    console.log('UIManager: createViewElements - creating create-exercise view');
     this.createCreateExerciseView();
+    console.log('UIManager: createViewElements - creating score view');
     this.createScoreView();
+    console.log('UIManager: createViewElements - creating exercise-list view');
     this.createExerciseListView();
 
     // Append views to container
     this.components.views.forEach(view => {
       this.components.container?.appendChild(view);
     });
+    console.log('UIManager: createViewElements - appended all views');
   }
 
   /**
@@ -150,8 +167,8 @@ export class UIManager extends EventEmitter {
         <h1>Handwriting Exercise</h1>
         <p>Practice your handwriting skills</p>
         <div class="button-container">
-          <button class="btn btn-primary" id="btn-load-exercise">Load Exercise</button>
-          <button class="btn btn-secondary" id="btn-create-exercise">Create New Exercise</button>
+          <button class="btn btn-primary" id="btn-create-template">Create New Template</button>
+          <button class="btn btn-secondary" id="btn-load-template">Load Saved Template</button>
         </div>
       </div>
     `;
@@ -159,20 +176,20 @@ export class UIManager extends EventEmitter {
     this.components.views.set('welcome', view);
 
     // Add button references
-    const loadButton = view.querySelector('#btn-load-exercise') as HTMLButtonElement;
-    const createButton = view.querySelector('#btn-create-exercise') as HTMLButtonElement;
+    const createButton = view.querySelector('#btn-create-template') as HTMLButtonElement;
+    const loadButton = view.querySelector('#btn-load-template') as HTMLButtonElement;
 
-    if (loadButton) {
-      this.components.buttons.set('load-exercise', loadButton);
-      loadButton.addEventListener('click', () => {
-        this.emit('load-exercise-clicked');
+    if (createButton) {
+      this.components.buttons.set('create-template', createButton);
+      createButton.addEventListener('click', () => {
+        this.emit('create-template-clicked');
       });
     }
 
-    if (createButton) {
-      this.components.buttons.set('create-exercise', createButton);
-      createButton.addEventListener('click', () => {
-        this.emit('create-exercise-clicked');
+    if (loadButton) {
+      this.components.buttons.set('load-template', loadButton);
+      loadButton.addEventListener('click', () => {
+        this.emit('load-template-clicked');
       });
     }
   }
@@ -335,9 +352,10 @@ export class UIManager extends EventEmitter {
   private createExerciseListView(): void {
     const view = document.createElement('div');
     view.className = 'view exercise-list-view';
+    view.style.display = 'none';
     view.innerHTML = `
       <div class="exercise-list-content">
-        <h2>Load Exercise</h2>
+        <h2>Load Saved Template</h2>
         <div class="exercise-list">
           <!-- Exercise items will be inserted dynamically -->
         </div>
@@ -488,6 +506,7 @@ export class UIManager extends EventEmitter {
    * @param viewType - Type of view to show
    */
   public showView(viewType: ViewType): void {
+    console.log(`UIManager: showView called with viewType='${viewType}'`);
     // Don't change views during transition
     if (this.state.isTransitioning) return;
 
@@ -1252,6 +1271,7 @@ export class UIManager extends EventEmitter {
     exercises: Exercise[],
     thumbnails: { [exerciseId: string]: string }
   ): void {
+    console.log(`UIManager: updateExerciseList with ${exercises.length} templates`);
     // Get the exercise list container
     const exerciseListView = this.components.views.get('exercise-list');
     if (!exerciseListView) return;
@@ -1266,7 +1286,7 @@ export class UIManager extends EventEmitter {
       // Show no exercises message
       const noExercises = document.createElement('div');
       noExercises.className = 'no-exercises-message';
-      noExercises.textContent = 'No exercises found. Create a new exercise first.';
+      noExercises.textContent = 'No templates found. Create a new template first.';
       exerciseList.appendChild(noExercises);
       return;
     }
