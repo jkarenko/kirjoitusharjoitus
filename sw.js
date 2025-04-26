@@ -1886,7 +1886,7 @@ class z {
   }
 }
 _e();
-be([{"revision":null,"url":"assets/game-DCjPZTbf.js"},{"revision":null,"url":"assets/index-CoFXeMgE.css"},{"revision":null,"url":"assets/index-DGFLwo7G.js"},{"revision":null,"url":"assets/vendor-DbEQ4MDT.js"},{"revision":"643a4d48645610e56a4f86091013159b","url":"index.html"},{"revision":"c28e62c102a8cdf4518d6b08fddb9f5c","url":"registerSW.js"},{"revision":"cb91a42bdbeaa3fe024352ea667c809f","url":"favicon.svg"},{"revision":"8c9e4b83d66ab4d1d642b1c95c0a5448","url":"pwa-192x192.png"},{"revision":"c1b79d80a55f5611320f5534a13ee7e4","url":"pwa-512x512.png"},{"revision":"67d91c5c27326baa401c24b716f825e2","url":"manifest.webmanifest"}]);
+be([{"revision":null,"url":"assets/game-DCjPZTbf.js"},{"revision":null,"url":"assets/index-B_AB7tI2.js"},{"revision":null,"url":"assets/index-CNcwRCES.css"},{"revision":null,"url":"assets/vendor-DbEQ4MDT.js"},{"revision":"3d06848835c10e460ce9efbab544d7d2","url":"index.html"},{"revision":"c28e62c102a8cdf4518d6b08fddb9f5c","url":"registerSW.js"},{"revision":"cb91a42bdbeaa3fe024352ea667c809f","url":"favicon.svg"},{"revision":"8c9e4b83d66ab4d1d642b1c95c0a5448","url":"pwa-192x192.png"},{"revision":"c1b79d80a55f5611320f5534a13ee7e4","url":"pwa-512x512.png"},{"revision":"67d91c5c27326baa401c24b716f825e2","url":"manifest.webmanifest"}]);
 v(
   ({ url: s }) => s.pathname.includes("exercises"),
   new ke({
