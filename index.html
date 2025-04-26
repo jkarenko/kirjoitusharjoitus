@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Handwriting Practice</title>
+  <meta name="description" content="Handwriting practice game for children">
+  <link rel="stylesheet" href="/src/styles/main.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body>
+  <div id="app">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+      <div class="loading-content">
+        <h1>Handwriting Practice</h1>
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading...</p>
+      </div>
+    </div>
+
+    <!-- Main Game Container -->
+    <div id="game-container" class="game-container">
+      <!-- Views will be dynamically inserted here by UIManager -->
+    </div>
+
+    <!-- Error Screen Container (hidden by default) -->
+    <div id="error-screen" class="error-screen" style="display: none;">
+      <div class="error-content">
+        <h2>Oops! Something went wrong</h2>
+        <p id="error-message">An error occurred while loading the application.</p>
+        <button class="btn btn-primary" onclick="location.reload()">Try Again</button>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
