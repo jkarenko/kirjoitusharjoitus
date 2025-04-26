@@ -354,14 +354,12 @@ export class UIManager extends EventEmitter {
     view.className = 'view exercise-list-view';
     view.style.display = 'none';
     view.innerHTML = `
-      <div class="exercise-list-content">
-        <h2>Load Saved Template</h2>
-        <div class="exercise-list">
-          <!-- Exercise items will be inserted dynamically -->
-        </div>
-        <div class="controls">
-          <button class="btn btn-secondary" id="btn-back">Back</button>
-        </div>
+      <h2>Load Saved Template</h2>
+      <div class="controls">
+        <button class="btn btn-secondary" id="btn-back">Cancel</button>
+      </div>
+      <div class="exercise-list">
+        <!-- Exercise items will be inserted dynamically -->
       </div>
     `;
 
