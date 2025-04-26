@@ -36,3 +36,5 @@ coverage/
 test-results/
 *.tsbuildinfo
 
+# Generated PWA icons
+public/pwa-*.png
