@@ -52,54 +52,17 @@ async function init() {
     // Setup tablet-specific behaviors
     setupTabletBehavior();
 
-    // Listen for create template button click
-    uiManager.on('create-template-clicked', async () => {
-      console.log('Main: create-template-clicked event received');
-      // Show the template creation view
-      uiManager.showView('create-exercise');
+    // Instantiate GameManager and wire up all game flows through a single coordinator
+    const gameManager = new GameManager({
+      storageManager,
+      audioManager,
+      uiManager,
+      drawingManager,
+      scoreManager,
+      container: gameContainer,
     });
-
-    // Listen for load template button click
-    uiManager.on('load-template-clicked', async () => {
-      console.log('Main: load-template-clicked event received');
-      // Populate the template list with saved templates
-      const exercises = storageManager.getExercises();
-      console.log(`Main: loaded ${exercises.length} templates`, exercises);
-      const thumbnails: { [exerciseId: string]: string } = {};
-      exercises.forEach(exercise => {
-        const thumb = storageManager.getThumbnail(exercise.id);
-        if (thumb) {
-          thumbnails[exercise.id] = thumb;
-        }
-      });
-      uiManager.updateExerciseList(exercises, thumbnails);
-      // Show the template list view
-      uiManager.showView('exercise-list');
-    });
-
-    // Listen for template selection from the list
-    uiManager.on('exercise-selected', async exercise => {
-      console.log('Main: exercise-selected event received for', exercise);
-      // Initialize audio after user gesture if not already initialized
-      if (!audioManager['audioContext']) {
-        console.log('Main: Resuming/initializing AudioContext after user gesture');
-        await audioManager.initialize();
-        console.log('Audio manager initialized');
-      }
-      // Initialize game manager with all dependencies
-      const gameManager = new GameManager({
-        storageManager,
-        audioManager,
-        uiManager,
-        drawingManager,
-        scoreManager,
-        container: gameContainer,
-      });
-      await gameManager.initialize();
-      console.log('Game manager initialized');
-      // Start the game with the selected template/exercise
-      gameManager.startGameWithExercise(exercise);
-    });
+    await gameManager.initialize();
+    console.log('Game manager initialized');
 
     // Hide loading screen and show welcome view (UIManager does this by default)
     hideLoadingScreen();
