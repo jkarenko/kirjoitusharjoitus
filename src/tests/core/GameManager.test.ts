@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, MockInstance } from 'vitest';
 import { GameManager } from '../../core/GameManager';
 import { StorageManager } from '../../services/StorageManager';
 import { AudioManager } from '../../services/AudioManager';
@@ -96,7 +96,7 @@ describe('GameManager', () => {
   it('should handle create exercise flow', async () => {
     // Mock event handlers
     const createHandler = vi.fn();
-    (mockUIManager.on as jest.Mock).mockImplementation((event: string, handler: UIEventHandler) => {
+    (mockUIManager.on as unknown as MockInstance<[string, UIEventHandler], void>).mockImplementation((event: string, handler: UIEventHandler) => {
       if (event === 'create-exercise-clicked') {
         createHandler.mockImplementation(handler);
       }
@@ -115,7 +115,7 @@ describe('GameManager', () => {
 
   it('should handle attempt completion', async () => {
     const doneHandler = vi.fn();
-    (mockUIManager.on as jest.Mock).mockImplementation((event: string, handler: UIEventHandler) => {
+    (mockUIManager.on as unknown as MockInstance<[string, UIEventHandler], void>).mockImplementation((event: string, handler: UIEventHandler) => {
       if (event === 'done-button-clicked') {
         doneHandler.mockImplementation(handler);
       }

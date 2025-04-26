@@ -72,7 +72,7 @@ export class EventEmitter<T extends EventMap = Record<string, unknown[]>> {
         try {
           callback(...args);
         } catch (error) {
-          console.error(`Error in event handler for ${event}:`, error);
+          console.error(`Error in event handler for ${String(event)}:`, error);
         }
       });
     }

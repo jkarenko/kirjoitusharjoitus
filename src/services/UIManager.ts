@@ -114,7 +114,7 @@ export class UIManager extends EventEmitter {
     this.updateConfiguration();
 
     // Reset currentView so that showView('welcome') will always execute
-    (this.state as GameState).currentView = undefined;
+    (this.state as GameState).currentView = 'welcome' as ViewType;
     this.showView('welcome');
     console.log('UIManager: initialize - forcibly hiding exercise-list view');
     const listView = this.components.views.get('exercise-list');

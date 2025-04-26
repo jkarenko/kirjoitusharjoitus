@@ -4,13 +4,19 @@
  */
 
 // Define the BeforeInstallPromptEvent interface
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[];
-  readonly userChoice: Promise<{
-    outcome: 'accepted' | 'dismissed';
-    platform: string;
-  }>;
-  prompt(): Promise<void>;
+// Must be declared globally to extend Window interface
+declare global {
+  interface BeforeInstallPromptEvent extends Event {
+    readonly platforms: string[];
+    readonly userChoice: Promise<{
+      outcome: 'accepted' | 'dismissed';
+      platform: string;
+    }>;
+    prompt(): Promise<void>;
+  }
+  interface WindowEventMap {
+    'beforeinstallprompt': BeforeInstallPromptEvent;
+  }
 }
 
 export class PWAManager {
@@ -26,9 +32,9 @@ export class PWAManager {
    */
   private initialize(): void {
     // Handle PWA install prompt
-    window.addEventListener('beforeinstallprompt', (e: BeforeInstallPromptEvent) => {
+    window.addEventListener('beforeinstallprompt', (e: Event) => {
       e.preventDefault();
-      this.deferredPrompt = e;
+      this.deferredPrompt = e as BeforeInstallPromptEvent;
       this.showInstallPrompt();
     });
 
@@ -64,13 +70,15 @@ export class PWAManager {
 
     // Handle install button click
     document.getElementById('pwa-install')?.addEventListener('click', async () => {
-      this.deferredPrompt.prompt();
-      const result = await this.deferredPrompt.userChoice;
-      if (result.outcome === 'accepted') {
-        console.log('PWA installation accepted');
+      if (this.deferredPrompt) {
+        await this.deferredPrompt.prompt();
+        const result = await this.deferredPrompt.userChoice;
+        if (result.outcome === 'accepted') {
+          console.log('PWA installation accepted');
+        }
+        this.deferredPrompt = null;
+        promptContainer.remove();
       }
-      this.deferredPrompt = null;
-      promptContainer.remove();
     });
 
     // Handle cancel button click
