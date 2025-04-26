@@ -196,8 +196,9 @@ export class DrawingManager extends EventEmitter {
 
     // Get canvas-relative coordinates
     const rect = this.canvas.getBoundingClientRect();
-    const canvasX = x - rect.left;
-    const canvasY = y - rect.top;
+    const pixelRatio = this.canvas.width / rect.width;
+    const canvasX = (x - rect.left) * pixelRatio;
+    const canvasY = (y - rect.top) * pixelRatio;
 
     const now = Date.now();
 
@@ -248,8 +249,9 @@ export class DrawingManager extends EventEmitter {
 
     // Get canvas-relative coordinates
     const rect = this.canvas.getBoundingClientRect();
-    const canvasX = x - rect.left;
-    const canvasY = y - rect.top;
+    const pixelRatio = this.canvas.width / rect.width;
+    const canvasX = (x - rect.left) * pixelRatio;
+    const canvasY = (y - rect.top) * pixelRatio;
 
     const now = Date.now();
 
