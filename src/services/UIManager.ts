@@ -647,148 +647,131 @@ export class UIManager extends EventEmitter {
    */
   public showExampleDrawing(drawing: DrawingData): void {
     if (this.animation.exampleAnimationInProgress) return;
-
     this.animation.exampleAnimationInProgress = true;
 
-    // Create a canvas for the example
-    const exampleContainer = document.querySelector('.example-container');
-    if (!exampleContainer) return;
+    // Use constraint box as container for example
+    const box = this.components.constraintBox;
+    const history = this.components.historyDisplay;
+    if (!box || !history) {
+      this.animation.exampleAnimationInProgress = false;
+      return;
+    }
+
+    // Position and size constraint box as first-attempt dimensions
+    const baseBox = this.config.constraintBoxSize;
+    box.style.width = `${baseBox.width}px`;
+    box.style.height = `${baseBox.height}px`;
+    const drawingArea = box.parentElement;
+    if (drawingArea) {
+      const areaRect = drawingArea.getBoundingClientRect();
+      box.style.left = `${(areaRect.width - baseBox.width) / 2}px`;
+      box.style.top = `${(areaRect.height - baseBox.height) / 2}px`;
+    }
 
     // Clear any existing content
-    exampleContainer.innerHTML = '';
+    box.innerHTML = '';
 
-    // Create canvas
+    // Create canvas inside the constraint box
     const canvas = document.createElement('canvas');
     canvas.className = 'example-canvas';
-    exampleContainer.appendChild(canvas);
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    box.appendChild(canvas);
 
-    // Set canvas dimensions
-    const rect = exampleContainer.getBoundingClientRect();
-    canvas.width = rect.width * this.config.pixelRatio;
-    canvas.height = rect.height * this.config.pixelRatio;
-    canvas.style.width = `${rect.width}px`;
-    canvas.style.height = `${rect.height}px`;
+    // Setup high-DPI dimensions
+    const rect = box.getBoundingClientRect();
+    const pixelRatio = this.config.pixelRatio;
+    canvas.width = rect.width * pixelRatio;
+    canvas.height = rect.height * pixelRatio;
 
-    // Get context
     const context = canvas.getContext('2d');
-    if (!context) return;
+    if (!context) {
+      this.animation.exampleAnimationInProgress = false;
+      return;
+    }
+    context.scale(pixelRatio, pixelRatio);
 
-    // Apply device pixel ratio scale
-    context.scale(this.config.pixelRatio, this.config.pixelRatio);
+    // Compute drawing bounds
+    let minX = Infinity,
+      maxX = -Infinity,
+      minY = Infinity,
+      maxY = -Infinity;
+    drawing.strokes.forEach(stroke => {
+      stroke.points.forEach(pt => {
+        minX = Math.min(minX, pt.x);
+        maxX = Math.max(maxX, pt.x);
+        minY = Math.min(minY, pt.y);
+        maxY = Math.max(maxY, pt.y);
+      });
+    });
+    const originalWidth = maxX - minX;
+    const originalHeight = maxY - minY;
+    if (originalWidth === 0 || originalHeight === 0) {
+      this.animation.exampleAnimationInProgress = false;
+      return;
+    }
 
-    // Function to render drawing to canvas
-    const renderDrawing = (): void => {
-      // Clear canvas
-      context.clearRect(0, 0, canvas.width, canvas.height);
+    // Determine scale & offset
+    const canvasW = rect.width;
+    const canvasH = rect.height;
+    const scale = Math.min((canvasW / originalWidth) * 0.8, (canvasH / originalHeight) * 0.8);
+    const offsetX = (canvasW - originalWidth * scale) / 2;
+    const offsetY = (canvasH - originalHeight * scale) / 2;
 
-      // Find bounding box of drawing
-      let minX = Number.MAX_VALUE;
-      let maxX = Number.MIN_VALUE;
-      let minY = Number.MAX_VALUE;
-      let maxY = Number.MIN_VALUE;
-
-      for (const stroke of drawing.strokes) {
-        for (const point of stroke.points) {
-          minX = Math.min(minX, point.x);
-          maxX = Math.max(maxX, point.x);
-          minY = Math.min(minY, point.y);
-          maxY = Math.max(maxY, point.y);
-        }
-      }
-
-      // Calculate scale to fit in canvas
-      const originalWidth = maxX - minX;
-      const originalHeight = maxY - minY;
-
-      if (originalWidth === 0 || originalHeight === 0) return;
-
-      const canvasWidth = rect.width;
-      const canvasHeight = rect.height;
-
-      const scale = Math.min(
-        (canvasWidth / originalWidth) * 0.8,
-        (canvasHeight / originalHeight) * 0.8
-      );
-
-      // Calculate centering offset
-      const offsetX = (canvasWidth - originalWidth * scale) / 2;
-      const offsetY = (canvasHeight - originalHeight * scale) / 2;
-
-      // Draw each stroke
+    // Animate strokes sequentially
+    const animateStrokes = async () => {
       for (const stroke of drawing.strokes) {
         if (stroke.points.length < 2) continue;
-
         context.beginPath();
         context.strokeStyle = stroke.color;
         context.lineWidth = 3;
         context.lineCap = 'round';
         context.lineJoin = 'round';
-
-        // First point
-        const firstPoint = stroke.points[0];
-        const scaledX1 = offsetX + (firstPoint.x - minX) * scale;
-        const scaledY1 = offsetY + (firstPoint.y - minY) * scale;
-        context.moveTo(scaledX1, scaledY1);
-
-        // Rest of the points
-        for (let i = 1; i < stroke.points.length; i++) {
-          const point = stroke.points[i];
-          const scaledX = offsetX + (point.x - minX) * scale;
-          const scaledY = offsetY + (point.y - minY) * scale;
-          context.lineTo(scaledX, scaledY);
+        // Move to first point
+        const [first, ...rest] = stroke.points;
+        context.moveTo(offsetX + (first.x - minX) * scale, offsetY + (first.y - minY) * scale);
+        for (const pt of rest) {
+          context.lineTo(offsetX + (pt.x - minX) * scale, offsetY + (pt.y - minY) * scale);
+          context.stroke();
+          await new Promise(res => setTimeout(res, 20));
         }
-
-        context.stroke();
+        // Pause between strokes
+        await new Promise(res => setTimeout(res, 200));
       }
     };
 
-    // Initial render
-    renderDrawing();
-
-    // Animate to top-left corner
-    setTimeout(() => {
-      // Add animation class
+    // Run stroke animation then shrink into history
+    animateStrokes().then(() => {
       canvas.classList.add('animate-to-corner');
-
-      // Set the destination position
-      canvas.style.transform = 'scale(0.3) translate(-100%, -100%)';
-      canvas.style.transformOrigin = 'top left';
-
-      // Update after animation completes
+      // Center shrink so it stays fully inside the constraint box
+      canvas.style.transformOrigin = 'center center';
+      canvas.style.transform = 'scale(0.25)';
+      // After shrink animation, remove canvas and add thumbnail to history
       setTimeout(() => {
-        // Move to history display
-        if (this.components.historyDisplay) {
-          const exampleItem = document.createElement('div');
-          exampleItem.className = 'history-item example-item';
-
-          // Create a new canvas and render the drawing data
-          const historyCanvas = document.createElement('canvas');
-          const historyRect = this.components.historyDisplay.getBoundingClientRect();
-          const targetSize = historyRect.height * 0.8;
-          this.renderDrawingToCanvas(
-            drawing,
-            historyCanvas,
-            targetSize,
-            targetSize,
-            this.config.pixelRatio
-          );
-          exampleItem.appendChild(historyCanvas);
-
-          // Add label
-          const label = document.createElement('div');
-          label.className = 'history-label';
-          label.textContent = 'Example';
-          exampleItem.appendChild(label);
-
-          // Add to history display
-          this.components.historyDisplay.appendChild(exampleItem);
+        // Remove the example canvas so it no longer sits in the constraint box
+        if (canvas.parentElement === box) {
+          box.removeChild(canvas);
         }
 
-        // Complete animation
+        const exampleItem = document.createElement('div');
+        exampleItem.className = 'history-item example-item';
+        const historyCanvas = document.createElement('canvas');
+        const histRect = history.getBoundingClientRect();
+        const thumbSize = histRect.height * 0.7;
+        this.renderDrawingToCanvas(drawing, historyCanvas, thumbSize, thumbSize, pixelRatio);
+        exampleItem.appendChild(historyCanvas);
+        const label = document.createElement('div');
+        label.className = 'history-label';
+        label.textContent = 'Example';
+        exampleItem.appendChild(label);
+        history.appendChild(exampleItem);
         this.animation.exampleAnimationInProgress = false;
         this.emit('example-animation-complete');
-      }, 1000); // Animation duration
-    }, 2000); // Delay before starting animation
+      }, 1000);
+    });
   }
 
   /**
@@ -899,33 +882,40 @@ export class UIManager extends EventEmitter {
       // Add animation class
       tempCanvas.classList.add('animate-to-history');
 
-      // Get history display dimensions and position
-      if (!this.components.historyDisplay) {
-        drawingArea.removeChild(tempCanvas);
-        this.animation.attemptAnimationInProgress = false;
-        return;
-      }
-
-      const historyRect = this.components.historyDisplay.getBoundingClientRect();
+      // Get history display and drawing area rectangles
+      const historyRect = this.components.historyDisplay!.getBoundingClientRect();
       const drawingRect = drawingArea.getBoundingClientRect();
+      const drawingAreaRect = drawingArea.getBoundingClientRect();
 
-      // Calculate target size (small thumbnail)
-      const targetWidth = historyRect.height * 0.8;
-      const targetHeight = historyRect.height * 0.8;
+      // Determine thumbnail dimensions (70% of history height)
+      const thumbWidth = historyRect.height * 0.7;
+      const thumbHeight = historyRect.height * 0.7;
 
-      // Calculate scale factor
-      const scaleX = targetWidth / drawingRect.width;
-      const scaleY = targetHeight / drawingRect.height;
+      // Calculate scale to fit drawing into thumbnail
+      const scaleX = thumbWidth / drawingRect.width;
+      const scaleY = thumbHeight / drawingRect.height;
       const scale = Math.min(scaleX, scaleY);
 
-      // Calculate target position
-      const targetX = historyRect.width - targetWidth * this.historyItems.length - targetWidth - 10;
-      const targetY = 0;
+      // Compute horizontal offset in history display for this item
+      const itemIndex = this.historyItems.length;
+      const gap = 10; // same as margin-right
+      const xInHistory = itemIndex * (thumbWidth + gap);
 
-      // Apply animation
+      // Calculate translation offsets relative to drawing area container
+      const offsetX =
+        historyRect.left -
+        drawingAreaRect.left +
+        xInHistory +
+        (thumbWidth - drawingRect.width * scale) / 2;
+      const offsetY =
+        historyRect.top -
+        drawingAreaRect.top +
+        (historyRect.height - drawingRect.height * scale) / 2;
+
+      // Apply shrink-and-move animation
       tempCanvas.style.transition = 'transform 0.8s ease-in-out';
       tempCanvas.style.transformOrigin = 'top left';
-      tempCanvas.style.transform = `translate(${targetX}px, ${targetY}px) scale(${scale})`;
+      tempCanvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
 
       // After animation completes
       setTimeout(() => {
@@ -938,8 +928,8 @@ export class UIManager extends EventEmitter {
         this.renderDrawingToCanvas(
           drawing,
           historyCanvas,
-          targetWidth,
-          targetHeight,
+          thumbWidth,
+          thumbHeight,
           this.config.pixelRatio
         );
         historyItem.appendChild(historyCanvas);

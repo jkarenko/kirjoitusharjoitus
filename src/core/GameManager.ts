@@ -227,18 +227,18 @@ export class GameManager {
     // Reset history display
     this.uiManager.resetHistoryDisplay();
 
-    // Show example drawing
+    // Switch to attempt view first so the example container is laid out and measurable
+    this.uiManager.showView('attempt');
+
+    // Show example drawing now that the view is visible
     this.uiManager.showExampleDrawing(exercise.adultDrawing);
 
-    // After animation, start first attempt
-    this.uiManager.on('example-animation-complete', () => {
+    // After animation completes, start the first attempt and remove this listener
+    const onExampleComplete = () => {
       this.startNextAttempt();
-      // Remove this one-time listener
-      this.uiManager.off('example-animation-complete', this.startNextAttempt);
-    });
-
-    // Switch to attempt view
-    this.uiManager.showView('attempt');
+      this.uiManager.off('example-animation-complete', onExampleComplete);
+    };
+    this.uiManager.on('example-animation-complete', onExampleComplete);
   }
 
   /**
