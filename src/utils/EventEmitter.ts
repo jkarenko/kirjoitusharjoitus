@@ -3,24 +3,30 @@
  * A simple event system for component communication
  */
 
-export type EventCallback = (...args: any[]) => void;
+// Define event mapping interface for type safety
+export interface EventMap {
+  [event: string]: unknown[];
+}
 
-export class EventEmitter {
-  private events: Map<string, EventCallback[]> = new Map();
+// Type for event callback based on event name and arguments
+export type EventCallback<T extends EventMap, K extends keyof T> = (...args: T[K]) => void;
+
+export class EventEmitter<T extends EventMap = Record<string, unknown[]>> {
+  private events: Map<keyof T, Array<EventCallback<T, keyof T>>> = new Map();
 
   /**
    * Register an event listener
    * @param event - Event name
    * @param callback - Callback function to execute when event is emitted
    */
-  public on(event: string, callback: EventCallback): void {
+  public on<K extends keyof T>(event: K, callback: EventCallback<T, K>): void {
     if (!this.events.has(event)) {
       this.events.set(event, []);
     }
     
     const callbacks = this.events.get(event);
     if (callbacks) {
-      callbacks.push(callback);
+      callbacks.push(callback as EventCallback<T, keyof T>);
     }
   }
 
@@ -29,14 +35,14 @@ export class EventEmitter {
    * @param event - Event name
    * @param callback - Callback function to remove
    */
-  public off(event: string, callback: EventCallback): void {
+  public off<K extends keyof T>(event: K, callback: EventCallback<T, K>): void {
     if (!this.events.has(event)) {
       return;
     }
     
     const callbacks = this.events.get(event);
     if (callbacks) {
-      const index = callbacks.indexOf(callback);
+      const index = callbacks.indexOf(callback as EventCallback<T, keyof T>);
       if (index !== -1) {
         callbacks.splice(index, 1);
         
@@ -53,7 +59,7 @@ export class EventEmitter {
    * @param event - Event name
    * @param args - Arguments to pass to event listeners
    */
-  public emit(event: string, ...args: any[]): void {
+  public emit<K extends keyof T>(event: K, ...args: T[K]): void {
     if (!this.events.has(event)) {
       return;
     }

@@ -26,6 +26,11 @@ interface ThumbnailStorage {
   [exerciseId: string]: string; // exercise ID -> data URL
 }
 
+// Serialized exercise from localStorage (with date as string)
+interface SerializedExercise extends Omit<Exercise, 'createdAt'> {
+  createdAt: string;
+}
+
 export class StorageManager extends EventEmitter {
   private exercises: Exercise[] = [];
   private settings: AppSettings = {
@@ -74,7 +79,7 @@ export class StorageManager extends EventEmitter {
         const exercisesData = JSON.parse(exercisesJson);
         
         // Convert stored dates back to Date objects
-        this.exercises = exercisesData.map((exercise: any) => ({
+        this.exercises = exercisesData.map((exercise: SerializedExercise) => ({
           ...exercise,
           createdAt: new Date(exercise.createdAt)
         }));

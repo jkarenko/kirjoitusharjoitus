@@ -5,7 +5,42 @@ import { AudioManager } from '../../services/AudioManager';
 import { UIManager } from '../../services/UIManager';
 import { DrawingManager } from '../../core/DrawingManager';
 import { ScoreManager } from '../../core/ScoreManager';
+import { ScoreResult } from '../../types/Exercise';
 
+// Type definitions
+type UIEventHandler = () => void;
+
+type StrokePoint = {
+  x: number;
+  y: number;
+  pressure?: number;
+};
+
+type Stroke = {
+  points: StrokePoint[];
+  color: string;
+  width: number;
+};
+
+type GameManagerState = {
+  currentExercise: {
+    id: string;
+    name: string;
+    createdAt: Date;
+    adultDrawing: {
+      strokes: Stroke[];
+      totalTime: number;
+      width: number;
+      height: number;
+      created: number;
+    };
+    attempts: Stroke[][];
+    highestScore: ScoreResult | null;
+  } | null;
+  currentAttempt: number;
+  isPlaying: boolean;
+  isCreatingExercise: boolean;
+};
 describe('GameManager', () => {
   let gameManager: GameManager;
   let mockStorageManager: StorageManager;
@@ -32,7 +67,7 @@ describe('GameManager', () => {
 
     // Mock UI methods
     vi.spyOn(mockUIManager, 'showView').mockImplementation(() => {});
-    (vi.spyOn(mockUIManager, 'on') as any).mockImplementation(() => {});
+    vi.spyOn(mockUIManager, 'on').mockImplementation(() => mockUIManager);
     vi.spyOn(mockAudioManager, 'playWelcomeSound').mockImplementation(() => {});
 
     gameManager = new GameManager({
@@ -61,9 +96,9 @@ describe('GameManager', () => {
   it('should handle create exercise flow', async () => {
     // Mock event handlers
     const createHandler = vi.fn();
-    (mockUIManager.on as any).mockImplementation((event: string, handler: Function) => {
+    (mockUIManager.on as jest.Mock).mockImplementation((event: string, handler: UIEventHandler) => {
       if (event === 'create-exercise-clicked') {
-        createHandler.mockImplementation(handler as any);
+        createHandler.mockImplementation(handler);
       }
       return mockUIManager;
     });
@@ -80,9 +115,9 @@ describe('GameManager', () => {
 
   it('should handle attempt completion', async () => {
     const doneHandler = vi.fn();
-    (mockUIManager.on as any).mockImplementation((event: string, handler: Function) => {
+    (mockUIManager.on as jest.Mock).mockImplementation((event: string, handler: UIEventHandler) => {
       if (event === 'done-button-clicked') {
-        doneHandler.mockImplementation(handler as any);
+        doneHandler.mockImplementation(handler);
       }
       return mockUIManager;
     });
@@ -100,7 +135,7 @@ describe('GameManager', () => {
     vi.spyOn(mockUIManager, 'animateDrawingToHistory').mockImplementation(() => {});
 
     // Set up mock state
-    (gameManager as any).state = {
+    (gameManager as unknown as { state: GameManagerState }).state = {
       currentExercise: {
         id: '1',
         name: 'Test Exercise',
@@ -123,7 +158,7 @@ describe('GameManager', () => {
     await gameManager.initialize();
 
     // Call the mock handler directly
-    (gameManager as any).handleDoneButtonClicked();
+    (gameManager as unknown as { handleDoneButtonClicked: () => void }).handleDoneButtonClicked();
 
     expect(mockDrawingManager.disable).toHaveBeenCalled();
     expect(mockDrawingManager.getDrawingData).toHaveBeenCalled();
@@ -150,7 +185,7 @@ describe('GameManager', () => {
     vi.spyOn(mockAudioManager, 'playFanfareSound').mockImplementation(() => {});
 
     // Set up mock state
-    (gameManager as any).state = {
+    (gameManager as unknown as { state: GameManagerState }).state = {
       currentExercise: {
         id: '1',
         name: 'Test Exercise',
@@ -171,7 +206,7 @@ describe('GameManager', () => {
     };
 
     // Call private method
-    (gameManager as any).showScoreScreen();
+    (gameManager as unknown as { showScoreScreen: () => void }).showScoreScreen();
 
     expect(mockUIManager.showScoreScreen).toHaveBeenCalledWith(mockScore);
     expect(mockAudioManager.playFanfareSound).toHaveBeenCalled();
@@ -179,7 +214,7 @@ describe('GameManager', () => {
 
   it('should handle back to menu from create exercise', async () => {
     // Set up state
-    (gameManager as any).state = {
+    (gameManager as unknown as { state: GameManagerState }).state = {
       currentExercise: null,
       currentAttempt: 0,
       isPlaying: false,
@@ -191,12 +226,12 @@ describe('GameManager', () => {
     vi.spyOn(mockUIManager, 'resetHistoryDisplay').mockImplementation(() => {});
 
     // Call handler
-    (gameManager as any).handleBackToMenu();
+    (gameManager as unknown as { handleBackToMenu: () => void }).handleBackToMenu();
 
     expect(mockUIManager.showView).toHaveBeenCalledWith('welcome');
     expect(mockUIManager.cleanupAnimations).toHaveBeenCalled();
     expect(mockUIManager.resetHistoryDisplay).toHaveBeenCalled();
-    expect((gameManager as any).state.isCreatingExercise).toBe(false);
+    expect((gameManager as unknown as { state: GameManagerState }).state.isCreatingExercise).toBe(false);
   });
 
   it('should handle try again with current exercise', async () => {
@@ -216,7 +251,7 @@ describe('GameManager', () => {
     };
 
     // Set up state with mock exercise
-    (gameManager as any).state = {
+    (gameManager as unknown as { state: GameManagerState }).state = {
       currentExercise: mockExercise,
       currentAttempt: 5,
       isPlaying: true,
@@ -230,11 +265,11 @@ describe('GameManager', () => {
     vi.spyOn(mockUIManager, 'off').mockImplementation(() => mockUIManager);
 
     // Call handler
-    (gameManager as any).handleTryAgain();
+    (gameManager as unknown as { handleTryAgain: () => void }).handleTryAgain();
 
     expect(mockUIManager.resetHistoryDisplay).toHaveBeenCalled();
     expect(mockUIManager.showExampleDrawing).toHaveBeenCalledWith(mockExercise.adultDrawing);
-    expect((gameManager as any).state.currentAttempt).toBe(0);
+    expect((gameManager as unknown as { state: GameManagerState }).state.currentAttempt).toBe(0);
   });
 
   it('should handle save exercise errors', async () => {
@@ -250,7 +285,9 @@ describe('GameManager', () => {
     vi.spyOn(mockUIManager, 'showError').mockImplementation(() => {});
 
     // Call handler
-    await (gameManager as any).handleSaveExercise({ name: 'Test Exercise' });
+    await (gameManager as unknown as { 
+      handleSaveExercise: (data: { name: string }) => Promise<void> 
+    }).handleSaveExercise({ name: 'Test Exercise' });
 
     expect(mockUIManager.showError).toHaveBeenCalledWith(
       expect.stringContaining('Failed to save exercise')

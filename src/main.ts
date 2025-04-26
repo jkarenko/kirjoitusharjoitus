@@ -13,7 +13,7 @@ import { UIManager } from './services/UIManager';
 /**
  * Initialize the application
  */
-async function init() {
+async function init(): Promise<void> {
   console.log('Initializing handwriting exercise game...');
 
   try {
@@ -78,7 +78,7 @@ async function init() {
 /**
  * Show loading screen
  */
-function showLoadingScreen() {
+function showLoadingScreen(): void {
   console.log('Main: showLoadingScreen');
   const loadingScreen = document.getElementById('loading-screen');
   if (loadingScreen) {
@@ -90,7 +90,7 @@ function showLoadingScreen() {
 /**
  * Hide loading screen with fade-out animation
  */
-function hideLoadingScreen() {
+function hideLoadingScreen(): void {
   console.log('Main: hideLoadingScreen');
   const loadingScreen = document.getElementById('loading-screen');
   if (loadingScreen) {
@@ -107,7 +107,7 @@ function hideLoadingScreen() {
 /**
  * Set up tablet-specific behaviors
  */
-function setupTabletBehavior() {
+function setupTabletBehavior(): void {
   // Prevent default touch behaviors on canvas
   document.addEventListener(
     'touchstart',
@@ -151,7 +151,7 @@ function setupTabletBehavior() {
 /**
  * Show error screen when initialization fails
  */
-function showErrorScreen(error: unknown) {
+function showErrorScreen(error: unknown): void {
   const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
 
   const container = document.getElementById('app');

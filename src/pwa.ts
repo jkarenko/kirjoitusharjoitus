@@ -3,8 +3,18 @@
  * Handles PWA installation and related functionality
  */
 
+// Define the BeforeInstallPromptEvent interface
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
 export class PWAManager {
-  private deferredPrompt: any = null;
+  private deferredPrompt: BeforeInstallPromptEvent | null = null;
   private installed = false;
 
   constructor() {
@@ -16,7 +26,7 @@ export class PWAManager {
    */
   private initialize(): void {
     // Handle PWA install prompt
-    window.addEventListener('beforeinstallprompt', (e) => {
+    window.addEventListener('beforeinstallprompt', (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
       this.deferredPrompt = e;
       this.showInstallPrompt();

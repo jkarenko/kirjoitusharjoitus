@@ -376,7 +376,7 @@ export class AudioManager extends EventEmitter {
     oscillator.stop(stopTime + env.release);
     
     // Clean up after oscillator stops
-    oscillator.onended = () => {
+    oscillator.onended = (): void => {
       this.activeOscillators.delete(id);
       this.activeGains.delete(id);
       oscillator.disconnect();

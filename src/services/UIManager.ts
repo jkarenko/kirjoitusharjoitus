@@ -114,7 +114,7 @@ export class UIManager extends EventEmitter {
     this.updateConfiguration();
 
     // Reset currentView so that showView('welcome') will always execute
-    (this.state as any).currentView = undefined;
+    (this.state as GameState).currentView = undefined;
     this.showView('welcome');
     console.log('UIManager: initialize - forcibly hiding exercise-list view');
     const listView = this.components.views.get('exercise-list');
@@ -677,7 +677,7 @@ export class UIManager extends EventEmitter {
     context.scale(this.config.pixelRatio, this.config.pixelRatio);
 
     // Function to render drawing to canvas
-    const renderDrawing = () => {
+    const renderDrawing = (): void => {
       // Clear canvas
       context.clearRect(0, 0, canvas.width, canvas.height);
 

@@ -1,5 +1,26 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { UIManager } from '../../services/UIManager';
+import { ViewType } from '../../types/Exercise';
+
+// Type for accessing private members in tests
+interface UIManagerPrivate {
+  state: {
+    currentAttempt: number;
+    currentView: ViewType;
+    isTransitioning: boolean;
+    isLoading: boolean;
+    hasError: boolean;
+    errorMessage: string;
+  };
+  components: {
+    container: HTMLElement | null;
+    views: Map<ViewType, HTMLElement>;
+    drawingCanvas: HTMLCanvasElement | null;
+    constraintBox: HTMLElement | null;
+    historyDisplay: HTMLElement | null;
+    buttons: Map<string, HTMLButtonElement>;
+  };
+}
 
 describe('UIManager', () => {
   let uiManager: UIManager;
@@ -29,7 +50,7 @@ describe('UIManager', () => {
     // Mock view elements to avoid full DOM creation
     const welcomeView = document.createElement('div');
     welcomeView.className = 'view welcome-view';
-
+    
     const attemptView = document.createElement('div');
     attemptView.className = 'view attempt-view';
 
@@ -37,9 +58,9 @@ describe('UIManager', () => {
     container.appendChild(welcomeView);
     container.appendChild(attemptView);
 
-    // Add to views map using private property access hack
-    (uiManager as any).components.views.set('welcome', welcomeView);
-    (uiManager as any).components.views.set('attempt', attemptView);
+    // Add to views map using proper type casting
+    (uiManager as unknown as UIManagerPrivate).components.views.set('welcome', welcomeView);
+    (uiManager as unknown as UIManagerPrivate).components.views.set('attempt', attemptView);
 
     // Test view switching
     uiManager.showView('welcome');
@@ -59,8 +80,6 @@ describe('UIManager', () => {
   });
 
   it('should set up attempt view correctly', () => {
-    uiManager.initialize(container);
-
     // Create constraint box element
     const constraintBox = document.createElement('div');
     constraintBox.className = 'constraint-box';
@@ -69,15 +88,14 @@ describe('UIManager', () => {
     // Create attempt counter element
     const attemptCounter = document.createElement('span');
     attemptCounter.id = 'current-attempt';
-    container.appendChild(attemptCounter);
 
     // Set constraint box in components
-    (uiManager as any).components.constraintBox = constraintBox;
+    (uiManager as unknown as UIManagerPrivate).components.constraintBox = constraintBox;
 
     // Test setup attempt view
     const boxSize = { width: 200, height: 200 };
     uiManager.setupAttemptView(2, boxSize);
 
-    expect((uiManager as any).state.currentAttempt).toBe(2);
+    expect((uiManager as unknown as UIManagerPrivate).state.currentAttempt).toBe(2);
   });
 });

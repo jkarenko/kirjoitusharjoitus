@@ -4,6 +4,11 @@ declare module 'workbox-strategies';
 declare module 'workbox-expiration';
 declare module 'workbox-cacheable-response';
 
-interface ServiceWorkerGlobalScope {
-  __WB_MANIFEST: any;
-} 
+interface ManifestEntry {
+  url: string;
+  revision: string | null;
+}
+
+interface ServiceWorkerGlobalScope extends WindowOrWorkerGlobalScope {
+  __WB_MANIFEST: ManifestEntry[];
+}
