@@ -457,11 +457,14 @@ export class GameManager {
    * @returns Constraint box size
    */
   private calculateConstraintBoxSize(attemptNumber: number): ConstraintBoxSize {
-    // Base size (adjust based on screen size)
-    const baseSize = 300;
+    // Use viewport size for base, matching UIManager
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const minDimension = Math.min(width, height);
+    const baseSize = minDimension * 0.6; // 60% of smaller dimension
 
-    // Scale factor reduces by 15% for each attempt (100%, 85%, 70%, 55%, 40%)
-    const scaleFactor = Math.max(0.4, 1 - (attemptNumber - 1) * 0.15);
+    // For the first attempt, use full base size; shrink only for subsequent attempts
+    const scaleFactor = attemptNumber === 1 ? 1 : Math.max(0.4, 1 - (attemptNumber - 1) * 0.01);
 
     return {
       width: baseSize * scaleFactor,
