@@ -14,7 +14,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["vite/client"],
+    "types": ["vite/client", "vitest/globals", "node"],
     "sourceMap": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
@@ -22,4 +22,3 @@
   "include": ["src"],
   "exclude": ["node_modules"]
 }
-

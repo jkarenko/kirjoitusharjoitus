@@ -8,7 +8,7 @@ import { ScoreManager } from './ScoreManager';
 import { StorageManager } from '../services/StorageManager';
 import { AudioManager } from '../services/AudioManager';
 import { UIManager } from '../services/UIManager';
-import { Exercise, DrawingData, ConstraintBoxSize, ScoreResult } from '../types/Exercise';
+import { Exercise, ConstraintBoxSize, ScoreResult } from '../types/Exercise';
 
 /**
  * GameManager options
@@ -39,18 +39,18 @@ export class GameManager {
   private uiManager: UIManager;
   private drawingManager: DrawingManager;
   private scoreManager: ScoreManager;
-  
+
   // Game state
   private state: GameState = {
     currentExercise: null,
     currentAttempt: 0,
     isPlaying: false,
-    isCreatingExercise: false
+    isCreatingExercise: false,
   };
-  
+
   // Constants
   private readonly MAX_ATTEMPTS = 5;
-  
+
   /**
    * Create a new GameManager
    * @param options - Options for initializing the game manager
@@ -61,7 +61,7 @@ export class GameManager {
     this.uiManager = options.uiManager;
     this.drawingManager = options.drawingManager;
     this.scoreManager = options.scoreManager;
-    
+
     // Bind methods to maintain context
     this.handleCreateExercise = this.handleCreateExercise.bind(this);
     this.handleLoadExercise = this.handleLoadExercise.bind(this);
@@ -74,22 +74,22 @@ export class GameManager {
     this.handleTryAgain = this.handleTryAgain.bind(this);
     this.startNextAttempt = this.startNextAttempt.bind(this);
   }
-  
+
   /**
    * Initialize the game manager
    */
   public async initialize(): Promise<void> {
     console.log('Initializing game manager...');
-    
+
     // Set up event listeners
     this.setupEventListeners();
-    
+
     // Set up drawing canvas
     this.setupDrawingCanvas();
-    
+
     return Promise.resolve();
   }
-  
+
   /**
    * Setup event listeners
    */
@@ -108,13 +108,13 @@ export class GameManager {
     this.uiManager.on('star-added', (starCount: number) => {
       this.audioManager.playStarSound(starCount);
     });
-    
+
     // Drawing Manager events
     this.drawingManager.on('stroke-completed', () => {
       this.audioManager.playStrokeSound();
     });
   }
-  
+
   /**
    * Setup drawing canvas
    */
@@ -125,7 +125,7 @@ export class GameManager {
       this.drawingManager.setCanvas(canvas);
     }
   }
-  
+
   /**
    * Show the welcome screen
    */
@@ -135,42 +135,44 @@ export class GameManager {
     this.state.currentAttempt = 0;
     this.state.isPlaying = false;
     this.state.isCreatingExercise = false;
-    
+
     // Show welcome view
     this.uiManager.showView('welcome');
-    
+
     // Play welcome sound
     this.audioManager.playWelcomeSound();
   }
-  
+
   /**
    * Handle create exercise button click
    */
   private handleCreateExercise(): void {
     // Update state
     this.state.isCreatingExercise = true;
-    
+
     // Switch to create exercise view
     this.uiManager.showView('create-exercise');
-    
+
     // Reset drawing manager
     this.drawingManager.reset();
-    
+
     // Get drawing canvas from the UI
-    const canvas = document.querySelector('.create-exercise-view .drawing-canvas') as HTMLCanvasElement;
+    const canvas = document.querySelector(
+      '.create-exercise-view .drawing-canvas'
+    ) as HTMLCanvasElement;
     if (canvas) {
       this.drawingManager.setCanvas(canvas);
       this.drawingManager.enable();
     }
   }
-  
+
   /**
    * Handle load exercise button click
    */
   private handleLoadExercise(): void {
     // Get exercises from storage
     const exercises = this.storageManager.getExercises();
-    
+
     // Get thumbnails
     const thumbnails: { [exerciseId: string]: string } = {};
     exercises.forEach(exercise => {
@@ -179,14 +181,14 @@ export class GameManager {
         thumbnails[exercise.id] = thumbnail;
       }
     });
-    
+
     // Update exercise list in UI
     this.uiManager.updateExerciseList(exercises, thumbnails);
-    
+
     // Show exercise list view
     this.uiManager.showView('exercise-list');
   }
-  
+
   /**
    * Handle exercise selection
    * @param exercise - Selected exercise
@@ -196,41 +198,41 @@ export class GameManager {
     this.state.currentExercise = exercise;
     this.state.currentAttempt = 0;
     this.state.isPlaying = true;
-    
+
     // Reset history display
     this.uiManager.resetHistoryDisplay();
-    
+
     // Show example drawing
     this.uiManager.showExampleDrawing(exercise.adultDrawing);
-    
+
     // After animation, start first attempt
     this.uiManager.on('example-animation-complete', () => {
       this.startNextAttempt();
       // Remove this one-time listener
       this.uiManager.off('example-animation-complete', this.startNextAttempt);
     });
-    
+
     // Switch to attempt view
     this.uiManager.showView('attempt');
   }
-  
+
   /**
    * Start the next attempt
    */
   private startNextAttempt(): void {
     this.state.currentAttempt++;
-    
+
     if (this.state.currentAttempt > this.MAX_ATTEMPTS) {
       this.showScoreScreen();
       return;
     }
-    
+
     // Calculate constraint box size for current attempt
     const boxSize = this.calculateConstraintBoxSize(this.state.currentAttempt);
-    
+
     // Set up attempt view
     this.uiManager.setupAttemptView(this.state.currentAttempt, boxSize);
-    
+
     // Get drawing canvas from the UI
     const canvas = document.querySelector('.attempt-view .drawing-canvas') as HTMLCanvasElement;
     if (canvas) {
@@ -238,25 +240,29 @@ export class GameManager {
       this.drawingManager.reset();
       this.drawingManager.enable();
     }
-    
+
     // Play attempt start sound
     this.audioManager.playAttemptStartSound();
   }
-  
+
   /**
    * Handle done button click
    */
   private handleDoneButtonClicked(): void {
     if (!this.state.currentExercise) return;
-    
+
     // Disable drawing
     this.drawingManager.disable();
-    
+
     // Get drawing data
     const drawingData = this.drawingManager.getDrawingData();
-    
+
     // Save attempt
-    if (this.state.currentExercise && this.state.currentAttempt > 0 && this.state.currentAttempt <= this.MAX_ATTEMPTS) {
+    if (
+      this.state.currentExercise &&
+      this.state.currentAttempt > 0 &&
+      this.state.currentAttempt <= this.MAX_ATTEMPTS
+    ) {
       // Ensure attempts array has enough slots
       while (this.state.currentExercise.attempts.length < this.state.currentAttempt) {
         this.state.currentExercise.attempts.push({
@@ -264,21 +270,21 @@ export class GameManager {
           totalTime: 0,
           width: 0,
           height: 0,
-          created: Date.now()
+          created: Date.now(),
         });
       }
-      
+
       // Save current attempt
       this.state.currentExercise.attempts[this.state.currentAttempt - 1] = drawingData;
     }
-    
+
     // Play sound
     this.audioManager.playAttemptCompleteSound();
-    
+
     // Animate drawing to history
-    this.uiManager.animateDrawingToHistory(drawingData, this.state.currentAttempt);
+    this.uiManager.animateDrawingToHistory(this.state.currentAttempt);
   }
-  
+
   /**
    * Handle attempt animation complete
    * @param attemptNumber - Completed attempt number
@@ -291,29 +297,29 @@ export class GameManager {
       this.startNextAttempt();
     }
   }
-  
+
   /**
    * Show score screen after all attempts
    */
   private showScoreScreen(): void {
     if (!this.state.currentExercise) return;
-    
+
     // Calculate score
     const score = this.scoreManager.calculateScore(
       this.state.currentExercise.adultDrawing,
       this.state.currentExercise.attempts
     );
-    
+
     // Save score to exercise
     this.saveExerciseResult(this.state.currentExercise, score);
-    
+
     // Show score screen
     this.uiManager.showScoreScreen(score);
-    
+
     // Play fanfare sound
     this.audioManager.playFanfareSound();
   }
-  
+
   /**
    * Save exercise result
    * @param exercise - Exercise with attempts
@@ -327,7 +333,7 @@ export class GameManager {
       this.uiManager.showError('Failed to save your score');
     }
   }
-  
+
   /**
    * Handle save exercise button click
    * @param data - Exercise data with name
@@ -335,7 +341,7 @@ export class GameManager {
   private handleSaveExercise(data: { name: string }): void {
     // Get drawing data
     const drawingData = this.drawingManager.getDrawingData();
-    
+
     // Create new exercise
     const exercise: Exercise = {
       id: Date.now().toString(),
@@ -343,36 +349,39 @@ export class GameManager {
       createdAt: new Date(),
       adultDrawing: drawingData,
       attempts: [],
-      highestScore: null
+      highestScore: null,
     };
-    
+
     // Save exercise
-    this.storageManager.saveExercise(exercise).then(() => {
-      // Show confirmation
-      this.uiManager.showExerciseSavedConfirmation();
-      
-      // Back to welcome screen
-      setTimeout(() => {
-        this.state.isCreatingExercise = false;
-        this.uiManager.showView('welcome');
-      }, 1500);
-    }).catch(error => {
-      console.error('Failed to save exercise:', error);
-      this.uiManager.showError('Failed to save exercise');
-    });
+    this.storageManager
+      .saveExercise(exercise)
+      .then(() => {
+        // Show confirmation
+        this.uiManager.showExerciseSavedConfirmation();
+
+        // Back to welcome screen
+        setTimeout(() => {
+          this.state.isCreatingExercise = false;
+          this.uiManager.showView('welcome');
+        }, 1500);
+      })
+      .catch(error => {
+        console.error('Failed to save exercise:', error);
+        this.uiManager.showError('Failed to save exercise');
+      });
   }
-  
+
   /**
    * Handle cancel exercise button click
    */
   private handleCancelExercise(): void {
     // Update state
     this.state.isCreatingExercise = false;
-    
+
     // Return to welcome screen
     this.uiManager.showView('welcome');
   }
-  
+
   /**
    * Handle back to menu button click
    */
@@ -382,41 +391,41 @@ export class GameManager {
     this.state.currentAttempt = 0;
     this.state.isPlaying = false;
     this.state.isCreatingExercise = false;
-    
+
     // Clean up UI
     this.uiManager.cleanupAnimations();
     this.uiManager.resetHistoryDisplay();
-    
+
     // Return to welcome screen
     this.uiManager.showView('welcome');
   }
-  
+
   /**
    * Handle try again button click
    */
   private handleTryAgain(): void {
     if (!this.state.currentExercise) return;
-    
+
     // Keep the current exercise, reset attempt
     this.state.currentAttempt = 0;
-    
+
     // Clean up UI
     this.uiManager.resetHistoryDisplay();
-    
+
     // Show example drawing again
     this.uiManager.showExampleDrawing(this.state.currentExercise.adultDrawing);
-    
+
     // After animation, start first attempt
     this.uiManager.on('example-animation-complete', () => {
       this.startNextAttempt();
       // Remove this one-time listener
       this.uiManager.off('example-animation-complete', this.startNextAttempt);
     });
-    
+
     // Switch to attempt view
     this.uiManager.showView('attempt');
   }
-  
+
   /**
    * Calculate constraint box size for a given attempt
    * @param attemptNumber - Current attempt number (1-5)
@@ -425,13 +434,13 @@ export class GameManager {
   private calculateConstraintBoxSize(attemptNumber: number): ConstraintBoxSize {
     // Base size (adjust based on screen size)
     const baseSize = 300;
-    
+
     // Scale factor reduces by 15% for each attempt (100%, 85%, 70%, 55%, 40%)
-    const scaleFactor = Math.max(0.4, 1 - ((attemptNumber - 1) * 0.15));
-    
+    const scaleFactor = Math.max(0.4, 1 - (attemptNumber - 1) * 0.15);
+
     return {
       width: baseSize * scaleFactor,
-      height: baseSize * scaleFactor
+      height: baseSize * scaleFactor,
     };
   }
 }

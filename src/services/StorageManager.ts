@@ -473,3 +473,5 @@ export class StorageManager extends EventEmitter {
       console.error('Failed to persist thumbnails:', error);
       return Promise.reject(error);
     }
+  }
+}

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from '../utils/EventEmitter';
-import { StrokeData, Point, DrawingData } from '../types/Exercise';
+import { StrokeData, DrawingData } from '../types/Exercise';
 
 export class DrawingManager extends EventEmitter {
   private canvas: HTMLCanvasElement | null = null;
@@ -323,5 +323,4 @@ export class DrawingManager extends EventEmitter {
       created: Date.now()
     };
   }
-  
-
+}

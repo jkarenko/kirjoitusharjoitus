@@ -9,10 +9,6 @@ import { ScoreManager } from './core/ScoreManager';
 import { StorageManager } from './services/StorageManager';
 import { AudioManager } from './services/AudioManager';
 import { UIManager } from './services/UIManager';
-import { PWAManager } from './pwa';
-
-// Initialize PWA manager
-const pwaManager = new PWAManager();
 
 /**
  * Initialize the application
@@ -116,13 +112,6 @@ function hideLoadingScreen() {
  * Set up tablet-specific behaviors
  */
 function setupTabletBehavior() {
-  // Prevent pinch zoom
-  document.addEventListener('touchmove', (event) => {
-    if (event.scale !== 1) {
-      event.preventDefault();
-    }
-  }, { passive: false });
-  
   // Prevent default touch behaviors on canvas
   document.addEventListener('touchstart', (event) => {
     if (event.target instanceof HTMLCanvasElement) {

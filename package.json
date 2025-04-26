@@ -27,24 +27,23 @@
   ],
   "author": "",
   "license": "ISC",
-  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.10.5",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
+    "@vitest/coverage-v8": "^0.34.6",
     "eslint": "^8.56.0",
+    "jsdom": "^22.1.0",
     "prettier": "^3.1.0",
+    "sharp": "^0.32.6",
     "typescript": "^5.3.3",
     "vite": "^5.0.10",
     "vite-plugin-pwa": "^0.17.4",
     "vitest": "^0.34.6",
-    "jsdom": "^22.1.0",
-    "@vitest/coverage-v8": "^0.34.6",
+    "workbox-cacheable-response": "^7.0.0",
+    "workbox-expiration": "^7.0.0",
     "workbox-precaching": "^7.0.0",
     "workbox-routing": "^7.0.0",
-    "workbox-strategies": "^7.0.0",
-    "workbox-expiration": "^7.0.0",
-    "workbox-cacheable-response": "^7.0.0",
-    "sharp": "^0.32.6"
+    "workbox-strategies": "^7.0.0"
   }
 }

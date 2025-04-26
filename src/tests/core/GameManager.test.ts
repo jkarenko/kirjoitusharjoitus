@@ -26,14 +26,14 @@ describe('GameManager', () => {
     // Mock initialize methods
     vi.spyOn(mockStorageManager, 'initialize').mockResolvedValue();
     vi.spyOn(mockAudioManager, 'initialize').mockResolvedValue();
-    vi.spyOn(mockUIManager, 'initialize').mockImplementation();
-    vi.spyOn(mockDrawingManager, 'initialize').mockImplementation();
-    vi.spyOn(mockScoreManager, 'initialize').mockImplementation();
-    
+    vi.spyOn(mockUIManager, 'initialize').mockImplementation(() => {});
+    vi.spyOn(mockDrawingManager, 'initialize').mockImplementation(() => {});
+    vi.spyOn(mockScoreManager, 'initialize').mockImplementation(() => {});
+
     // Mock UI methods
-    vi.spyOn(mockUIManager, 'showView').mockImplementation();
-    vi.spyOn(mockUIManager, 'on').mockImplementation();
-    vi.spyOn(mockAudioManager, 'playWelcomeSound').mockImplementation();
+    vi.spyOn(mockUIManager, 'showView').mockImplementation(() => {});
+    (vi.spyOn(mockUIManager, 'on') as any).mockImplementation(() => {});
+    vi.spyOn(mockAudioManager, 'playWelcomeSound').mockImplementation(() => {});
 
     gameManager = new GameManager({
       storageManager: mockStorageManager,
@@ -41,7 +41,7 @@ describe('GameManager', () => {
       uiManager: mockUIManager,
       drawingManager: mockDrawingManager,
       scoreManager: mockScoreManager,
-      container
+      container,
     });
   });
 
@@ -61,44 +61,44 @@ describe('GameManager', () => {
   it('should handle create exercise flow', async () => {
     // Mock event handlers
     const createHandler = vi.fn();
-    mockUIManager.on.mockImplementation((event, handler) => {
+    (mockUIManager.on as any).mockImplementation((event: string, handler: Function) => {
       if (event === 'create-exercise-clicked') {
-        createHandler.mockImplementation(handler);
+        createHandler.mockImplementation(handler as any);
       }
       return mockUIManager;
     });
-    
+
     // Mock drawing manager
-    vi.spyOn(mockDrawingManager, 'reset').mockImplementation();
-    vi.spyOn(mockDrawingManager, 'enable').mockImplementation();
-    
+    vi.spyOn(mockDrawingManager, 'reset').mockImplementation(() => {});
+    vi.spyOn(mockDrawingManager, 'enable').mockImplementation(() => {});
+
     await gameManager.initialize();
     createHandler();
-    
+
     expect(mockUIManager.showView).toHaveBeenCalledWith('create-exercise');
   });
 
   it('should handle attempt completion', async () => {
     const doneHandler = vi.fn();
-    mockUIManager.on.mockImplementation((event, handler) => {
+    (mockUIManager.on as any).mockImplementation((event: string, handler: Function) => {
       if (event === 'done-button-clicked') {
-        doneHandler.mockImplementation(handler);
+        doneHandler.mockImplementation(handler as any);
       }
       return mockUIManager;
     });
-    
+
     // Mock methods
-    vi.spyOn(mockDrawingManager, 'disable').mockImplementation();
+    vi.spyOn(mockDrawingManager, 'disable').mockImplementation(() => {});
     vi.spyOn(mockDrawingManager, 'getDrawingData').mockReturnValue({
       strokes: [],
       totalTime: 0,
       width: 300,
       height: 300,
-      created: Date.now()
+      created: Date.now(),
     });
-    vi.spyOn(mockAudioManager, 'playAttemptCompleteSound').mockImplementation();
-    vi.spyOn(mockUIManager, 'animateDrawingToHistory').mockImplementation();
-    
+    vi.spyOn(mockAudioManager, 'playAttemptCompleteSound').mockImplementation(() => {});
+    vi.spyOn(mockUIManager, 'animateDrawingToHistory').mockImplementation(() => {});
+
     // Set up mock state
     (gameManager as any).state = {
       currentExercise: {
@@ -110,21 +110,21 @@ describe('GameManager', () => {
           totalTime: 0,
           width: 300,
           height: 300,
-          created: Date.now()
+          created: Date.now(),
         },
         attempts: [],
-        highestScore: null
+        highestScore: null,
       },
       currentAttempt: 1,
       isPlaying: true,
-      isCreatingExercise: false
+      isCreatingExercise: false,
     };
-    
+
     await gameManager.initialize();
-    
+
     // Call the mock handler directly
     (gameManager as any).handleDoneButtonClicked();
-    
+
     expect(mockDrawingManager.disable).toHaveBeenCalled();
     expect(mockDrawingManager.getDrawingData).toHaveBeenCalled();
     expect(mockAudioManager.playAttemptCompleteSound).toHaveBeenCalled();
@@ -137,18 +137,18 @@ describe('GameManager', () => {
         accuracy: 4,
         strokes: 4,
         timing: 5,
-        overall: 4
+        overall: 4,
       },
       feedback: 'Great job!',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
+
     // Mock required methods
     vi.spyOn(mockScoreManager, 'calculateScore').mockReturnValue(mockScore);
     vi.spyOn(mockStorageManager, 'saveExerciseResult').mockResolvedValue();
-    vi.spyOn(mockUIManager, 'showScoreScreen').mockImplementation();
-    vi.spyOn(mockAudioManager, 'playFanfareSound').mockImplementation();
-    
+    vi.spyOn(mockUIManager, 'showScoreScreen').mockImplementation(() => {});
+    vi.spyOn(mockAudioManager, 'playFanfareSound').mockImplementation(() => {});
+
     // Set up mock state
     (gameManager as any).state = {
       currentExercise: {
@@ -160,19 +160,19 @@ describe('GameManager', () => {
           totalTime: 0,
           width: 300,
           height: 300,
-          created: Date.now()
+          created: Date.now(),
         },
         attempts: [],
-        highestScore: null
+        highestScore: null,
       },
       currentAttempt: 5,
       isPlaying: true,
-      isCreatingExercise: false
+      isCreatingExercise: false,
     };
-    
+
     // Call private method
     (gameManager as any).showScoreScreen();
-    
+
     expect(mockUIManager.showScoreScreen).toHaveBeenCalledWith(mockScore);
     expect(mockAudioManager.playFanfareSound).toHaveBeenCalled();
   });
@@ -183,16 +183,16 @@ describe('GameManager', () => {
       currentExercise: null,
       currentAttempt: 0,
       isPlaying: false,
-      isCreatingExercise: true
+      isCreatingExercise: true,
     };
-    
+
     // Mock cleanup methods
-    vi.spyOn(mockUIManager, 'cleanupAnimations').mockImplementation();
-    vi.spyOn(mockUIManager, 'resetHistoryDisplay').mockImplementation();
-    
+    vi.spyOn(mockUIManager, 'cleanupAnimations').mockImplementation(() => {});
+    vi.spyOn(mockUIManager, 'resetHistoryDisplay').mockImplementation(() => {});
+
     // Call handler
     (gameManager as any).handleBackToMenu();
-    
+
     expect(mockUIManager.showView).toHaveBeenCalledWith('welcome');
     expect(mockUIManager.cleanupAnimations).toHaveBeenCalled();
     expect(mockUIManager.resetHistoryDisplay).toHaveBeenCalled();
@@ -209,29 +209,29 @@ describe('GameManager', () => {
         totalTime: 0,
         width: 300,
         height: 300,
-        created: Date.now()
+        created: Date.now(),
       },
       attempts: [],
-      highestScore: null
+      highestScore: null,
     };
-    
+
     // Set up state with mock exercise
     (gameManager as any).state = {
       currentExercise: mockExercise,
       currentAttempt: 5,
       isPlaying: true,
-      isCreatingExercise: false
+      isCreatingExercise: false,
     };
-    
+
     // Mock required methods
-    vi.spyOn(mockUIManager, 'resetHistoryDisplay').mockImplementation();
-    vi.spyOn(mockUIManager, 'showExampleDrawing').mockImplementation();
+    vi.spyOn(mockUIManager, 'resetHistoryDisplay').mockImplementation(() => {});
+    vi.spyOn(mockUIManager, 'showExampleDrawing').mockImplementation(() => {});
     vi.spyOn(mockUIManager, 'on').mockImplementation(() => mockUIManager);
     vi.spyOn(mockUIManager, 'off').mockImplementation(() => mockUIManager);
-    
+
     // Call handler
     (gameManager as any).handleTryAgain();
-    
+
     expect(mockUIManager.resetHistoryDisplay).toHaveBeenCalled();
     expect(mockUIManager.showExampleDrawing).toHaveBeenCalledWith(mockExercise.adultDrawing);
     expect((gameManager as any).state.currentAttempt).toBe(0);
@@ -244,15 +244,16 @@ describe('GameManager', () => {
       totalTime: 0,
       width: 300,
       height: 300,
-      created: Date.now()
+      created: Date.now(),
     });
     vi.spyOn(mockStorageManager, 'saveExercise').mockRejectedValue(new Error('Storage error'));
-    vi.spyOn(mockUIManager, 'showError').mockImplementation();
-    
+    vi.spyOn(mockUIManager, 'showError').mockImplementation(() => {});
+
     // Call handler
     await (gameManager as any).handleSaveExercise({ name: 'Test Exercise' });
-    
-    expect(mockUIManager.showError).toHaveBeenCalledWith(expect.stringContaining('Failed to save exercise'));
+
+    expect(mockUIManager.showError).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to save exercise')
+    );
   });
 });
-

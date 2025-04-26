@@ -16,7 +16,7 @@ precacheAndRoute(self.__WB_MANIFEST);
 
 // Cache exercise data with network-first strategy
 registerRoute(
-  ({ url }) => url.pathname.includes('exercises'),
+  ({ url }: { url: URL }) => url.pathname.includes('exercises'),
   new NetworkFirst({
     cacheName: 'exercise-data',
     plugins: [
@@ -29,7 +29,8 @@ registerRoute(
 
 // Cache static assets with cache-first strategy
 registerRoute(
-  ({ request }) => request.destination === 'image' || request.destination === 'font',
+  ({ request }: { request: Request }) =>
+    request.destination === 'image' || request.destination === 'font',
   new CacheFirst({
     cacheName: 'static-assets',
     plugins: [
@@ -48,33 +49,32 @@ registerRoute(
 setDefaultHandler(new NetworkOnly());
 
 // Handle errors
-self.addEventListener('error', (event) => {
+self.addEventListener('error', event => {
   console.error('Service Worker error:', event.error);
 });
 
 // Handle unhandled promise rejections
-self.addEventListener('unhandledrejection', (event) => {
+self.addEventListener('unhandledrejection', event => {
   console.error('Service Worker unhandled rejection:', event.reason);
 });
 
 // Install event
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   console.log('Service Worker installing.');
   // Skip waiting to activate new service worker immediately
   event.waitUntil(self.skipWaiting());
 });
 
 // Activate event
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   console.log('Service Worker activated.');
   // Take control of all clients immediately
   event.waitUntil(self.clients.claim());
 });
 
 // Handle message events from clients
-self.addEventListener('message', (event) => {
+self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });
-
