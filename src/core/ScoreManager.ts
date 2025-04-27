@@ -85,19 +85,24 @@ export class ScoreManager extends EventEmitter {
       finalAttempt,
       constraintBoxes?.[attempts.length - 1]
     );
+    console.log('accuracyScore', accuracyScore);
 
     // 2. Calculate strokes score (number and length of strokes)
     const strokesScore = this.calculateStrokesScore(example, finalAttempt);
+    console.log('strokesScore', strokesScore);
 
     // 3. Calculate timing score (rhythm and pace of drawing)
     const timingScore = this.calculateTimingScore(example, finalAttempt);
+    console.log('timingScore', timingScore);
 
     // 4. Calculate overall score
     const overallScore = Math.round(
-      accuracyScore * this.WEIGHTS.accuracy +
+      (accuracyScore * this.WEIGHTS.accuracy +
         strokesScore * this.WEIGHTS.strokes +
-        timingScore * this.WEIGHTS.timing
+        timingScore * this.WEIGHTS.timing) *
+        this.MAX_SCORE
     );
+    console.log('overallScore', overallScore);
 
     // 5. Convert normalized scores (0-1) to star ratings (1-5)
     const categories: ScoreCategories = {
@@ -106,9 +111,11 @@ export class ScoreManager extends EventEmitter {
       timing: this.normalizedScoreToStars(timingScore),
       overall: this.normalizedScoreToStars(overallScore / this.MAX_SCORE),
     };
+    console.log('categories', categories);
 
     // 6. Generate feedback based on overall score
     const feedback = this.generateFeedback(overallScore);
+    console.log('feedback', feedback);
 
     // Create and return the complete score result
     const scoreResult: ScoreResult = {
@@ -117,6 +124,7 @@ export class ScoreManager extends EventEmitter {
       feedback,
       timestamp: Date.now(),
     };
+    console.log('scoreResult', scoreResult);
 
     // Emit score calculated event
     this.emit('score-calculated', scoreResult);
