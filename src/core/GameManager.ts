@@ -311,7 +311,9 @@ export class GameManager {
    * Handle done button click
    */
   private handleDoneButtonClicked(): void {
-    if (!this.state.currentExercise) return;
+    if (!this.state.currentExercise) {
+      return;
+    }
 
     // Disable drawing
     this.drawingManager.disable();
@@ -364,7 +366,9 @@ export class GameManager {
    * Show score screen after all attempts
    */
   private showScoreScreen(): void {
-    if (!this.state.currentExercise) return;
+    if (!this.state.currentExercise) {
+      return;
+    }
 
     // Calculate score
     const score = this.scoreManager.calculateScore(
@@ -466,7 +470,9 @@ export class GameManager {
    * Handle try again button click
    */
   private handleTryAgain(): void {
-    if (!this.state.currentExercise) return;
+    if (!this.state.currentExercise) {
+      return;
+    }
 
     // Keep the current exercise, reset attempt
     this.state.currentAttempt = 0;

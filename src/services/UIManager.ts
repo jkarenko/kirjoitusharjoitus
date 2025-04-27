@@ -137,7 +137,9 @@ export class UIManager extends EventEmitter {
    */
   private createViewElements(): void {
     console.log('UIManager: createViewElements - started');
-    if (!this.components.container) return;
+    if (!this.components.container) {
+      return;
+    }
 
     // Clear container
     this.components.container.innerHTML = '';
@@ -452,12 +454,16 @@ export class UIManager extends EventEmitter {
    * Update canvas dimensions to match device pixel ratio
    */
   private updateCanvasDimensions(): void {
-    if (!this.components.drawingCanvas) return;
+    if (!this.components.drawingCanvas) {
+      return;
+    }
 
     const canvas = this.components.drawingCanvas;
     const container = canvas.parentElement;
 
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     // Get container dimensions
     const rect = container.getBoundingClientRect();
@@ -475,7 +481,9 @@ export class UIManager extends EventEmitter {
    * Update constraint box size based on current attempt
    */
   private updateConstraintBoxSize(): void {
-    if (!this.components.constraintBox) return;
+    if (!this.components.constraintBox) {
+      return;
+    }
 
     const box = this.components.constraintBox;
 
@@ -498,7 +506,9 @@ export class UIManager extends EventEmitter {
    * Update history display area
    */
   private updateHistoryDisplay(): void {
-    if (!this.components.historyDisplay) return;
+    if (!this.components.historyDisplay) {
+      return;
+    }
 
     // Set height based on configuration
     this.components.historyDisplay.style.height = `${this.config.historyHeight}px`;
@@ -511,7 +521,9 @@ export class UIManager extends EventEmitter {
   public showView(viewType: ViewType): void {
     console.log(`UIManager: showView called with viewType='${viewType}'`);
     // Don't change views during transition
-    if (this.state.isTransitioning) return;
+    if (this.state.isTransitioning) {
+      return;
+    }
 
     // Get view element
     const view = this.components.views.get(viewType);
@@ -561,7 +573,9 @@ export class UIManager extends EventEmitter {
    * @param viewType - Type of view to transition to
    */
   public transitionToView(viewType: ViewType): void {
-    if (this.state.isTransitioning) return;
+    if (this.state.isTransitioning) {
+      return;
+    }
 
     this.state.isTransitioning = true;
 
@@ -657,7 +671,9 @@ export class UIManager extends EventEmitter {
     if (this.components.constraintBox) {
       this.components.constraintBox.style.transform = '';
     }
-    if (this.animation.exampleAnimationInProgress) return;
+    if (this.animation.exampleAnimationInProgress) {
+      return;
+    }
     this.animation.exampleAnimationInProgress = true;
 
     // Use constraint box as container for example
@@ -694,7 +710,7 @@ export class UIManager extends EventEmitter {
 
     // Setup high-DPI dimensions
     const rect = box.getBoundingClientRect();
-    const pixelRatio = this.config.pixelRatio;
+    const { pixelRatio } = this.config;
     canvas.width = rect.width * pixelRatio;
     canvas.height = rect.height * pixelRatio;
 
@@ -747,7 +763,9 @@ export class UIManager extends EventEmitter {
     };
 
     // Setup animator and controller
-    if (this.exampleAnimationController) this.exampleAnimationController.stop();
+    if (this.exampleAnimationController) {
+      this.exampleAnimationController.stop();
+    }
     this.exampleAnimationController = new AnimationController();
     this.exampleAnimator = new ExampleDrawingAnimator({
       ctx: context,
@@ -803,7 +821,9 @@ export class UIManager extends EventEmitter {
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      return;
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset any transforms
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.scale(pixelRatio, pixelRatio);
@@ -823,12 +843,16 @@ export class UIManager extends EventEmitter {
     }
     const originalWidth = maxX - minX;
     const originalHeight = maxY - minY;
-    if (originalWidth === 0 || originalHeight === 0) return;
+    if (originalWidth === 0 || originalHeight === 0) {
+      return;
+    }
     const scale = Math.min((width / originalWidth) * 0.8, (height / originalHeight) * 0.8);
     const offsetX = (width - originalWidth * scale) / 2;
     const offsetY = (height - originalHeight * scale) / 2;
     for (const stroke of drawing.strokes) {
-      if (stroke.points.length < 2) continue;
+      if (stroke.points.length < 2) {
+        continue;
+      }
       ctx.beginPath();
       ctx.strokeStyle = stroke.color;
       ctx.lineWidth = 3;
@@ -850,7 +874,9 @@ export class UIManager extends EventEmitter {
    * @param drawing - Drawing data for the attempt
    */
   public animateDrawingToHistory(attemptNumber: number, drawing: DrawingData): void {
-    if (this.animation.attemptAnimationInProgress) return;
+    if (this.animation.attemptAnimationInProgress) {
+      return;
+    }
 
     this.animation.attemptAnimationInProgress = true;
 
@@ -986,7 +1012,9 @@ export class UIManager extends EventEmitter {
 
     // Update score display elements
     const scoreView = this.components.views.get('score');
-    if (!scoreView) return;
+    if (!scoreView) {
+      return;
+    }
 
     // Update total score
     const scoreNumber = scoreView.querySelector('.score-number');
@@ -1058,7 +1086,9 @@ export class UIManager extends EventEmitter {
    * Reset the history display
    */
   public resetHistoryDisplay(): void {
-    if (!this.components.historyDisplay) return;
+    if (!this.components.historyDisplay) {
+      return;
+    }
 
     // Clear the history display
     this.components.historyDisplay.innerHTML = '';
@@ -1086,7 +1116,9 @@ export class UIManager extends EventEmitter {
    * Display a confirmation message when exercise is saved
    */
   public showExerciseSavedConfirmation(): void {
-    if (!this.components.container) return;
+    if (!this.components.container) {
+      return;
+    }
 
     // Create confirmation overlay
     const confirmationOverlay = document.createElement('div');
@@ -1126,7 +1158,9 @@ export class UIManager extends EventEmitter {
    */
   private displayStars(selector: string, starCount: number): void {
     const container = document.querySelector(selector) as HTMLElement;
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     // Clamp star count to valid range
     const validStarCount = Math.max(1, Math.min(5, starCount));
@@ -1177,7 +1211,9 @@ export class UIManager extends EventEmitter {
    * @param message - Optional loading message
    */
   public setLoading(message: string = 'Loading...'): void {
-    if (!this.components.container) return;
+    if (!this.components.container) {
+      return;
+    }
 
     // Don't add multiple loading overlays
     this.clearLoading();
@@ -1207,14 +1243,18 @@ export class UIManager extends EventEmitter {
    * Clear loading state
    */
   public clearLoading(): void {
-    if (!this.components.container) return;
+    if (!this.components.container) {
+      return;
+    }
 
     // Update state
     this.state.isLoading = false;
 
     // Find existing loading overlay
     const loadingOverlay = this.components.container.querySelector('.loading-overlay');
-    if (!loadingOverlay) return;
+    if (!loadingOverlay) {
+      return;
+    }
 
     // Fade out
     (loadingOverlay as HTMLElement).style.opacity = '0';
@@ -1232,7 +1272,9 @@ export class UIManager extends EventEmitter {
    * @param message - Error message
    */
   public showError(message: string): void {
-    if (!this.components.container) return;
+    if (!this.components.container) {
+      return;
+    }
 
     // Update state
     this.state.hasError = true;
@@ -1286,7 +1328,9 @@ export class UIManager extends EventEmitter {
    * Clear error message
    */
   public clearError(): void {
-    if (!this.components.container) return;
+    if (!this.components.container) {
+      return;
+    }
 
     // Update state
     this.state.hasError = false;
@@ -1294,7 +1338,9 @@ export class UIManager extends EventEmitter {
 
     // Find existing error overlay
     const errorOverlay = this.components.container.querySelector('.error-overlay');
-    if (!errorOverlay) return;
+    if (!errorOverlay) {
+      return;
+    }
 
     // Fade out
     (errorOverlay as HTMLElement).style.opacity = '0';
@@ -1322,10 +1368,14 @@ export class UIManager extends EventEmitter {
     console.log(`UIManager: updateExerciseList with ${exercises.length} templates`);
     // Get the exercise list container
     const exerciseListView = this.components.views.get('exercise-list');
-    if (!exerciseListView) return;
+    if (!exerciseListView) {
+      return;
+    }
 
     const exerciseList = exerciseListView.querySelector('.exercise-list');
-    if (!exerciseList) return;
+    if (!exerciseList) {
+      return;
+    }
 
     // Clear existing items
     exerciseList.innerHTML = '';

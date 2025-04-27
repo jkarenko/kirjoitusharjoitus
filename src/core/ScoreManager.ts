@@ -246,9 +246,7 @@ export class ScoreManager extends EventEmitter {
     // Convert to similarity score (0-1)
     // The smaller the distance, the higher the similarity
     // Using an exponential decay function to convert distance to similarity
-    const similarityScore = Math.exp(-avgDistance * 5);
-
-    return similarityScore;
+    return Math.exp(-avgDistance * 5);
   }
 
   /**
@@ -334,9 +332,7 @@ export class ScoreManager extends EventEmitter {
 
     // Calculate similarity score (0-1)
     // The smaller the total difference, the higher the similarity
-    const similarityScore = Math.max(0, 1 - totalDifference / minLength);
-
-    return similarityScore;
+    return Math.max(0, 1 - totalDifference / minLength);
   }
 
   /**
@@ -357,9 +353,7 @@ export class ScoreManager extends EventEmitter {
     // Ideal ratio is 1.0 (same time)
     // Score decreases as ratio moves away from 1.0 in either direction
     // Use a bell curve to score the ratio
-    const score = Math.exp(-Math.pow(Math.log(timeRatio), 2));
-
-    return score;
+    return Math.exp(-Math.pow(Math.log(timeRatio), 2));
   }
 
   /**
@@ -394,9 +388,7 @@ export class ScoreManager extends EventEmitter {
     }
 
     // Calculate similarity score (0-1)
-    const similarityScore = Math.max(0, 1 - totalDifference / minLength);
-
-    return similarityScore;
+    return Math.max(0, 1 - totalDifference / minLength);
   }
 
   /**

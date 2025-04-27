@@ -159,7 +159,9 @@ function showErrorScreen(error: unknown): void {
   const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
 
   const container = document.getElementById('app');
-  if (!container) return;
+  if (!container) {
+    return;
+  }
 
   // Hide loading screen
   const loadingScreen = document.getElementById('loading-screen');
