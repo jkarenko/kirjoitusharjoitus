@@ -29,6 +29,12 @@ export class AudioManager extends EventEmitter {
   private activeGains: Map<string, GainNode> = new Map();
   private muted: boolean = false;
 
+  // --- Continuous stroke sound state ---
+  private strokeOscillator: OscillatorNode | null = null;
+  private strokeGain: GainNode | null = null;
+  private strokeStartY: number | null = null;
+  private strokePaused: boolean = false;
+
   /**
    * Initialize the audio manager
    */
@@ -430,5 +436,101 @@ export class AudioManager extends EventEmitter {
 
     this.audioContext = null;
     this.masterGain = null;
+  }
+
+  /**
+   * Start a continuous stroke sound. Call this when the stroke begins.
+   * @param y0 - The starting Y position of the stroke
+   */
+  public startStrokeSound(y0: number): void {
+    if (!this.audioContext || !this.masterGain || this.muted) {
+      return;
+    }
+    this.stopStrokeSound(); // Ensure no previous stroke sound is running
+
+    this.strokeOscillator = this.audioContext.createOscillator();
+    this.strokeOscillator.type = 'sine';
+    // Initial frequency (can be updated immediately after)
+    this.strokeOscillator.frequency.value = 440;
+
+    this.strokeGain = this.audioContext.createGain();
+    // Start silent for fade-in
+    this.strokeGain.gain.value = 0;
+
+    this.strokeOscillator.connect(this.strokeGain);
+    this.strokeGain.connect(this.masterGain);
+
+    this.strokeOscillator.start();
+    this.strokeStartY = y0;
+    this.strokePaused = false;
+
+    // Fade in to 0.08 over 100ms
+    if (this.audioContext) {
+      this.strokeGain.gain.setValueAtTime(0, this.audioContext.currentTime);
+      this.strokeGain.gain.linearRampToValueAtTime(0.08, this.audioContext.currentTime + 0.1);
+    }
+  }
+
+  /**
+   * Update the pitch of the stroke sound based on current Y position.
+   * @param y - The current Y position
+   */
+  public updateStrokeSound(y: number): void {
+    if (!this.strokeOscillator || this.strokeStartY === null) {
+      return;
+    }
+    // Map Y-distance to frequency (e.g., 220 Hz to 1760 Hz)
+    const minFreq = 300;
+    const maxFreq = 800;
+    const maxDelta = 400; // Max Y-distance for full pitch range
+    const deltaY = -Math.max(-maxDelta, Math.min(maxDelta, y - this.strokeStartY));
+    // Normalize to 0..1
+    const norm = (deltaY + maxDelta) / (2 * maxDelta);
+    const freq = minFreq + (maxFreq - minFreq) * norm;
+    this.strokeOscillator.frequency.setValueAtTime(freq, this.audioContext!.currentTime);
+  }
+
+  /**
+   * Stop the continuous stroke sound. Call this when the stroke ends.
+   */
+  public stopStrokeSound(): void {
+    if (this.strokeOscillator) {
+      try {
+        // Fade out over 100ms
+        if (this.strokeGain && this.audioContext) {
+          this.strokeGain.gain.cancelScheduledValues(this.audioContext.currentTime);
+          this.strokeGain.gain.setValueAtTime(
+            this.strokeGain.gain.value,
+            this.audioContext.currentTime
+          );
+          this.strokeGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.1);
+        }
+        this.strokeOscillator.stop(this.audioContext!.currentTime + 0.11);
+      } catch (e) {
+        console.error('Failed to play stroke sound:', e);
+      }
+      this.strokeOscillator.disconnect();
+      if (this.strokeGain) {
+        this.strokeGain.disconnect();
+      }
+    }
+    this.strokeOscillator = null;
+    this.strokeGain = null;
+    this.strokeStartY = null;
+    this.strokePaused = false;
+  }
+
+  public pauseStrokeSound(): void {
+    if (this.strokeGain && !this.strokePaused) {
+      this.strokeGain.gain.setValueAtTime(0, this.audioContext!.currentTime);
+      this.strokePaused = true;
+    }
+  }
+
+  public resumeStrokeSound(): void {
+    if (this.strokeGain && this.strokePaused) {
+      this.strokeGain.gain.setValueAtTime(0.08, this.audioContext!.currentTime);
+      this.strokePaused = false;
+    }
   }
 }

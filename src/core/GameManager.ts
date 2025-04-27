@@ -116,8 +116,38 @@ export class GameManager {
     });
 
     // Drawing Manager events
+    let strokePauseTimer: ReturnType<typeof setTimeout> | null = null;
+    const PAUSE_DELAY = 120; // ms
+    let strokeSoundStarted = false;
+
+    this.drawingManager.on('stroke-started', () => {
+      strokeSoundStarted = false;
+    });
+    this.drawingManager.on('point-added', (point: any) => {
+      if (point && typeof point.y === 'number') {
+        if (!strokeSoundStarted) {
+          this.audioManager.startStrokeSound(point.y);
+          strokeSoundStarted = true;
+        } else {
+          this.audioManager.updateStrokeSound(point.y);
+        }
+        this.audioManager.resumeStrokeSound();
+        if (strokePauseTimer) {
+          clearTimeout(strokePauseTimer);
+        }
+        strokePauseTimer = setTimeout(() => {
+          this.audioManager.pauseStrokeSound();
+        }, PAUSE_DELAY);
+      }
+    });
     this.drawingManager.on('stroke-completed', () => {
-      this.audioManager.playStrokeSound();
+      if (strokePauseTimer) {
+        clearTimeout(strokePauseTimer);
+      }
+      this.audioManager.pauseStrokeSound();
+      this.audioManager.stopStrokeSound();
+      this.audioManager.playStrokeSound(); // keep the short beep for stroke end
+      strokeSoundStarted = false;
     });
   }
 
