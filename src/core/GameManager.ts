@@ -127,12 +127,12 @@ export class GameManager {
       });
       emitter.on('point-added', (...args) => {
         const point = args[0] as Point;
-        if (point && typeof point.y === 'number') {
+        if (point && typeof point.x === 'number' && typeof point.y === 'number') {
           if (!strokeSoundStarted) {
-            this.audioManager.startStrokeSound(point.y);
+            this.audioManager.startStrokeSound(point.x, point.y);
             strokeSoundStarted = true;
           } else {
-            this.audioManager.updateStrokeSound(point.y);
+            this.audioManager.updateStrokeSound(point.x, point.y);
           }
           this.audioManager.resumeStrokeSound();
           if (strokePauseTimer) {

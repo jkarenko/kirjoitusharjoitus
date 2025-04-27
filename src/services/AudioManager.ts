@@ -34,6 +34,14 @@ export class AudioManager extends EventEmitter {
   private strokeGain: GainNode | null = null;
   private strokeStartY: number | null = null;
   private strokePaused: boolean = false;
+  // Oscillator and gain for X-axis differentiation
+  private strokeOscillatorX: OscillatorNode | null = null;
+  private strokeGainX: GainNode | null = null;
+  // Starting X position for stroke
+  private strokeStartX: number | null = null;
+  // Default gains for continuous stroke oscillators
+  private defaultStrokeYGain: number = 0.08;
+  private defaultStrokeXGain: number = 0.02;
 
   /**
    * Initialize the audio manager
@@ -267,7 +275,7 @@ export class AudioManager extends EventEmitter {
       type: 'sine',
       duration: 0.03,
       gain: 0.05, // Very quiet
-      envelope: { attack: 0.01, decay: 0.01, sustain: 0.5, release: 0.01 },
+      envelope: { attack: 0.02, decay: 0.02, sustain: 0.5, release: 0.01 },
     };
 
     // Use a timestamp to ensure unique ID
@@ -439,10 +447,11 @@ export class AudioManager extends EventEmitter {
   }
 
   /**
-   * Start a continuous stroke sound. Call this when the stroke begins.
+   * Start a continuous stroke sound with a second oscillator for X-axis. Call this when the stroke begins.
+   * @param x0 - The starting X position of the stroke
    * @param y0 - The starting Y position of the stroke
    */
-  public startStrokeSound(y0: number): void {
+  public startStrokeSound(x0: number, y0: number): void {
     if (!this.audioContext || !this.masterGain || this.muted) {
       return;
     }
@@ -458,36 +467,67 @@ export class AudioManager extends EventEmitter {
     this.strokeGain.gain.value = 0;
 
     this.strokeOscillator.connect(this.strokeGain);
+    // Create second oscillator for X-axis
+    this.strokeOscillatorX = this.audioContext.createOscillator();
+    this.strokeOscillatorX.type = 'triangle';
+    this.strokeOscillatorX.frequency.value = 440;
+    this.strokeGainX = this.audioContext.createGain();
+    this.strokeGainX.gain.value = 0;
+    this.strokeOscillatorX.connect(this.strokeGainX);
+    // Connect secondary X-axis gain to master output
+    this.strokeGainX.connect(this.masterGain);
+    // Connect primary Y-axis oscillator
     this.strokeGain.connect(this.masterGain);
 
     this.strokeOscillator.start();
+    this.strokeOscillatorX.start();
+    this.strokeStartX = x0;
     this.strokeStartY = y0;
     this.strokePaused = false;
 
     // Fade in to 0.08 over 100ms
     if (this.audioContext) {
-      this.strokeGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-      this.strokeGain.gain.linearRampToValueAtTime(0.08, this.audioContext.currentTime + 0.1);
+      const now = this.audioContext.currentTime;
+      // Y-axis fade-in to configurable gain
+      this.strokeGain.gain.setValueAtTime(0, now);
+      this.strokeGain.gain.linearRampToValueAtTime(this.defaultStrokeYGain, now + 0.1);
+      // X-axis fade-in to configurable gain
+      this.strokeGainX!.gain.setValueAtTime(0, now);
+      this.strokeGainX!.gain.linearRampToValueAtTime(this.defaultStrokeXGain, now + 0.1);
     }
   }
 
   /**
-   * Update the pitch of the stroke sound based on current Y position.
+   * Update the pitch of the stroke sound oscillators based on current Y (primary) and X (secondary) positions.
+   * @param x - The current X position
    * @param y - The current Y position
    */
-  public updateStrokeSound(y: number): void {
-    if (!this.strokeOscillator || this.strokeStartY === null) {
+  public updateStrokeSound(x: number, y: number): void {
+    // Guard: ensure oscillators and start positions are initialized
+    if (
+      !this.strokeOscillator ||
+      !this.strokeOscillatorX ||
+      this.strokeStartY === null ||
+      this.strokeStartX === null
+    ) {
       return;
     }
-    // Map Y-distance to frequency (e.g., 220 Hz to 1760 Hz)
-    const minFreq = 300;
-    const maxFreq = 800;
-    const maxDelta = 400; // Max Y-distance for full pitch range
-    const deltaY = -Math.max(-maxDelta, Math.min(maxDelta, y - this.strokeStartY));
-    // Normalize to 0..1
-    const norm = (deltaY + maxDelta) / (2 * maxDelta);
-    const freq = minFreq + (maxFreq - minFreq) * norm;
+    // Compute primary Y-axis frequency (e.g., 220 Hz to 880 Hz)
+    const minFreq = 220;
+    const maxFreq = 880;
+    const maxDeltaY = 400;
+    const deltaY = -Math.max(-maxDeltaY, Math.min(maxDeltaY, y - this.strokeStartY));
+    const normY = (deltaY + maxDeltaY) / (8 * maxDeltaY);
+    const freq = minFreq + (maxFreq - minFreq) * normY;
     this.strokeOscillator.frequency.setValueAtTime(freq, this.audioContext!.currentTime);
+
+    // Apply X-axis delta as frequency offset to the secondary oscillator
+    const maxDeltaX = 800;
+    const deltaX = Math.max(-maxDeltaX, Math.min(maxDeltaX, x - this.strokeStartX));
+    const panNormalized = deltaX / maxDeltaX; // -1 .. 1
+    const offsetRange = (maxFreq - minFreq) / 8; // one eigth of Y-axis range
+    const freqX = freq + panNormalized * offsetRange;
+    this.strokeOscillatorX.frequency.setValueAtTime(freqX, this.audioContext!.currentTime);
   }
 
   /**
@@ -504,8 +544,19 @@ export class AudioManager extends EventEmitter {
             this.audioContext.currentTime
           );
           this.strokeGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.1);
+          if (this.strokeGainX) {
+            this.strokeGainX.gain.cancelScheduledValues(this.audioContext.currentTime);
+            this.strokeGainX.gain.setValueAtTime(
+              this.strokeGainX.gain.value,
+              this.audioContext.currentTime
+            );
+            this.strokeGainX.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.1);
+          }
         }
         this.strokeOscillator.stop(this.audioContext!.currentTime + 0.11);
+        if (this.strokeOscillatorX) {
+          this.strokeOscillatorX.stop(this.audioContext!.currentTime + 0.11);
+        }
       } catch (e) {
         console.error('Failed to play stroke sound:', e);
       }
@@ -513,24 +564,66 @@ export class AudioManager extends EventEmitter {
       if (this.strokeGain) {
         this.strokeGain.disconnect();
       }
+      if (this.strokeOscillatorX) {
+        this.strokeOscillatorX.disconnect();
+      }
+      if (this.strokeGainX) {
+        this.strokeGainX.disconnect();
+      }
     }
     this.strokeOscillator = null;
     this.strokeGain = null;
+    this.strokeOscillatorX = null;
+    this.strokeGainX = null;
     this.strokeStartY = null;
+    this.strokeStartX = null;
     this.strokePaused = false;
   }
 
   public pauseStrokeSound(): void {
     if (this.strokeGain && !this.strokePaused) {
+      // Mute both oscillators
       this.strokeGain.gain.setValueAtTime(0, this.audioContext!.currentTime);
+      if (this.strokeGainX) {
+        this.strokeGainX.gain.setValueAtTime(0, this.audioContext!.currentTime);
+      }
       this.strokePaused = true;
     }
   }
 
   public resumeStrokeSound(): void {
     if (this.strokeGain && this.strokePaused) {
-      this.strokeGain.gain.setValueAtTime(0.08, this.audioContext!.currentTime);
+      // Restore both oscillators to configurable gains
+      this.strokeGain.gain.setValueAtTime(this.defaultStrokeYGain, this.audioContext!.currentTime);
+      if (this.strokeGainX) {
+        this.strokeGainX.gain.setValueAtTime(
+          this.defaultStrokeXGain,
+          this.audioContext!.currentTime
+        );
+      }
       this.strokePaused = false;
+    }
+  }
+
+  /**
+   * Set the default Y-axis gain for continuous stroke sound (0-1).
+   */
+  public setStrokeYGain(gain: number): void {
+    const clamped = Math.max(0, Math.min(1, gain));
+    this.defaultStrokeYGain = clamped;
+    if (this.strokeGain && this.audioContext) {
+      this.strokeGain.gain.setValueAtTime(clamped, this.audioContext.currentTime);
+    }
+  }
+
+  /**
+   * Set the default X-axis gain for continuous stroke sound (0-1).
+   */
+  public setStrokeXGain(gain: number): void {
+    const clamped = Math.max(0, Math.min(1, gain));
+    this.defaultStrokeXGain = clamped;
+    if (this.strokeGainX && this.audioContext) {
+      this.strokeGainX.gain.setValueAtTime(clamped, this.audioContext.currentTime);
     }
   }
 }
