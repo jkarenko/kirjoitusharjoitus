@@ -5,6 +5,8 @@
 
 import { EventEmitter } from '../utils/EventEmitter';
 import { ViewType, Exercise, DrawingData, ScoreResult, ConstraintBoxSize } from '../types/Exercise';
+import { AnimationController } from '../utils/AnimationController';
+import { ExampleDrawingAnimator } from '../utils/ExampleDrawingAnimator';
 
 /**
  * Game UI state
@@ -93,6 +95,9 @@ export class UIManager extends EventEmitter {
 
   // History of drawing attempts
   private historyItems: HTMLElement[] = [];
+
+  private exampleAnimationController: AnimationController | null = null;
+  private exampleAnimator: ExampleDrawingAnimator | null = null;
 
   /**
    * Initialize the UI manager
@@ -727,36 +732,33 @@ export class UIManager extends EventEmitter {
     const offsetX = (canvasW - originalWidth * scale) / 2;
     const offsetY = (canvasH - originalHeight * scale) / 2;
 
-    // Animate strokes sequentially
-    const animateStrokes = async () => {
-      for (const stroke of drawing.strokes) {
-        if (stroke.points.length < 2) continue;
-        context.beginPath();
-        context.strokeStyle = stroke.color;
-        context.lineWidth = 3;
-        context.lineCap = 'round';
-        context.lineJoin = 'round';
-        // Move to first point
-        const [first, ...rest] = stroke.points;
-        context.moveTo(offsetX + (first.x - minX) * scale, offsetY + (first.y - minY) * scale);
-        // Emit synthetic stroke-started event
-        this.emit('stroke-started', stroke);
-        for (const pt of rest) {
-          context.lineTo(offsetX + (pt.x - minX) * scale, offsetY + (pt.y - minY) * scale);
-          context.stroke();
-          // Emit synthetic point-added event
-          this.emit('point-added', pt);
-          await new Promise(res => setTimeout(res, 20));
-        }
-        // Emit synthetic stroke-completed event
-        this.emit('stroke-completed', stroke);
-        // Pause between strokes
-        await new Promise(res => setTimeout(res, 200));
-      }
+    // Transform all points in drawing for scaled/centered animation
+    const transformedDrawing = {
+      ...drawing,
+      strokes: drawing.strokes.map(stroke => ({
+        ...stroke,
+        points: stroke.points.map(pt => ({
+          x: offsetX + (pt.x - minX) * scale,
+          y: offsetY + (pt.y - minY) * scale,
+          timestamp: pt.timestamp,
+          ...(pt.pressure !== undefined ? { pressure: pt.pressure } : {}),
+        })),
+      })),
     };
 
-    // Run stroke animation then shrink into history
-    animateStrokes().then(() => {
+    // Setup animator and controller
+    if (this.exampleAnimationController) this.exampleAnimationController.stop();
+    this.exampleAnimationController = new AnimationController();
+    this.exampleAnimator = new ExampleDrawingAnimator({
+      ctx: context,
+      emitter: this,
+      controller: this.exampleAnimationController,
+      pointIntervalMs: 20,
+      strokePauseMs: 200,
+    });
+
+    // Animate using the new animator
+    this.exampleAnimator.play(transformedDrawing).then(() => {
       canvas.classList.add('animate-to-corner');
       // Center shrink so it stays fully inside the constraint box
       canvas.style.transformOrigin = 'center center';
