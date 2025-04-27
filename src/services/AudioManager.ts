@@ -85,7 +85,9 @@ export class AudioManager extends EventEmitter {
    * @param volume - Volume level (0-1)
    */
   public setVolume(volume: number): void {
-    if (!this.audioContext || !this.masterGain) return;
+    if (!this.audioContext || !this.masterGain) {
+      return;
+    }
 
     // Clamp volume to 0-1 range
     const clampedVolume = Math.max(0, Math.min(1, volume));
@@ -104,7 +106,9 @@ export class AudioManager extends EventEmitter {
   public setMuted(muted: boolean): void {
     this.muted = muted;
 
-    if (!this.audioContext || !this.masterGain) return;
+    if (!this.audioContext || !this.masterGain) {
+      return;
+    }
 
     // Apply mute/unmute with slight ramp to avoid clicks
     this.masterGain.gain.linearRampToValueAtTime(
@@ -117,7 +121,9 @@ export class AudioManager extends EventEmitter {
    * Play a completion sound when an attempt is completed
    */
   public playAttemptCompleteSound(): void {
-    if (!this.audioContext || this.muted) return;
+    if (!this.audioContext || this.muted) {
+      return;
+    }
 
     // Play a rising arpeggio
     const notes: NoteParams[] = [
@@ -156,7 +162,9 @@ export class AudioManager extends EventEmitter {
    * Play a welcome sound when the game starts
    */
   public playWelcomeSound(): void {
-    if (!this.audioContext || this.muted) return;
+    if (!this.audioContext || this.muted) {
+      return;
+    }
 
     // Play a gentle chord
     const notes: NoteParams[] = [
@@ -193,7 +201,9 @@ export class AudioManager extends EventEmitter {
    * Play a fanfare sound for the final score
    */
   public playFanfareSound(): void {
-    if (!this.audioContext || this.muted) return;
+    if (!this.audioContext || this.muted) {
+      return;
+    }
 
     // Define a simple fanfare melody
     const notes: NoteParams[] = [
@@ -267,7 +277,9 @@ export class AudioManager extends EventEmitter {
    * Play a sound when stroke is being drawn
    */
   public playStrokeSound(): void {
-    if (!this.audioContext || this.muted) return;
+    if (!this.audioContext || this.muted) {
+      return;
+    }
 
     // Very subtle short beep
     const note: NoteParams = {
@@ -286,7 +298,9 @@ export class AudioManager extends EventEmitter {
    * Play a sound when an attempt starts
    */
   public playAttemptStartSound(): void {
-    if (!this.audioContext || this.muted) return;
+    if (!this.audioContext || this.muted) {
+      return;
+    }
 
     // Play a descending tone
     const note: NoteParams = {
@@ -304,7 +318,9 @@ export class AudioManager extends EventEmitter {
    * Play a sound when drawing outside of constraint box
    */
   public playErrorSound(): void {
-    if (!this.audioContext || this.muted) return;
+    if (!this.audioContext || this.muted) {
+      return;
+    }
 
     // Dissonant sound for error
     const notes: NoteParams[] = [
@@ -335,7 +351,9 @@ export class AudioManager extends EventEmitter {
    * @param starCount - Number of stars (1-5)
    */
   public playStarSound(starCount: number): void {
-    if (!this.audioContext || this.muted) return;
+    if (!this.audioContext || this.muted) {
+      return;
+    }
 
     // Base frequency increases with each star
     const baseFreq = 440 + starCount * 110; // A4, A4+, A5, etc.
@@ -357,7 +375,9 @@ export class AudioManager extends EventEmitter {
    * @param id - Unique ID for tracking the note
    */
   private playNote(params: NoteParams, id: string): void {
-    if (!this.audioContext || !this.masterGain) return;
+    if (!this.audioContext || !this.masterGain) {
+      return;
+    }
 
     // Create oscillator
     const oscillator = this.audioContext.createOscillator();
@@ -434,12 +454,10 @@ export class AudioManager extends EventEmitter {
     this.activeGains.clear();
 
     // Close audio context if supported
-    if (this.audioContext && this.audioContext.state !== 'closed') {
-      if (this.audioContext.close) {
-        this.audioContext.close().catch(error => {
-          console.error('Failed to close audio context:', error);
-        });
-      }
+    if (this.audioContext && this.audioContext.state !== 'closed' && this.audioContext.close) {
+      this.audioContext.close().catch(error => {
+        console.error('Failed to close audio context:', error);
+      });
     }
 
     this.audioContext = null;
