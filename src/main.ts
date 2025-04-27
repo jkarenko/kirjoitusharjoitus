@@ -49,6 +49,10 @@ async function init(): Promise<void> {
     scoreManager.initialize();
     console.log('Score manager initialized');
 
+    // Initialize audio manager
+    await audioManager.initialize();
+    console.log('Audio manager initialized');
+
     // Setup tablet-specific behaviors
     setupTabletBehavior();
 
@@ -67,7 +71,7 @@ async function init(): Promise<void> {
     // Hide loading screen and show welcome view (UIManager does this by default)
     hideLoadingScreen();
     console.log('Main: init complete, explicitly showing welcome view');
-    uiManager.showView('welcome');
+    gameManager.showWelcomeScreen();
     console.log('Main: welcome view should now be visible and on top');
   } catch (error) {
     console.error('Failed to initialize application:', error);

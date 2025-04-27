@@ -146,7 +146,7 @@ export class GameManager {
     this.uiManager.showView('welcome');
 
     // Play welcome sound
-    this.audioManager.playWelcomeSound();
+    // this.audioManager.playWelcomeSound();
   }
 
   /**
