@@ -19,7 +19,9 @@ export class AnimationController {
 
   public cancel(handle: string): void {
     this.tasks.delete(handle);
-    if (this.tasks.size === 0) this.stop();
+    if (this.tasks.size === 0) {
+      this.stop();
+    }
   }
 
   public start(): void {
@@ -38,14 +40,18 @@ export class AnimationController {
     }
   }
 
-  private loop = (timestamp: number) => {
-    if (!this.running) return;
+  private loop = (timestamp: number): void => {
+    if (!this.running) {
+      return;
+    }
     const dt = timestamp - this.lastTimestamp;
     this.lastTimestamp = timestamp;
     // Copy tasks to avoid mutation during iteration
     for (const [id, task] of Array.from(this.tasks.entries())) {
       const done = task.callback(dt);
-      if (done) this.tasks.delete(id);
+      if (done) {
+        this.tasks.delete(id);
+      }
     }
     if (this.tasks.size > 0) {
       this.rafId = requestAnimationFrame(this.loop);

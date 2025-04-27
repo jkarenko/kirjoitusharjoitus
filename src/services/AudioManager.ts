@@ -50,7 +50,7 @@ export class AudioManager extends EventEmitter {
 
       // Defer resume until user gesture due to autoplay policies
       if (this.audioContext.state === 'suspended') {
-        const resumeOnGesture = async () => {
+        const resumeOnGesture = async (): Promise<void> => {
           try {
             await this.audioContext!.resume();
             console.log('AudioContext resumed after user interaction');

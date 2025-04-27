@@ -8,7 +8,8 @@ import { ScoreManager } from './ScoreManager';
 import { StorageManager } from '../services/StorageManager';
 import { AudioManager } from '../services/AudioManager';
 import { UIManager } from '../services/UIManager';
-import { Exercise, ConstraintBoxSize, ScoreResult } from '../types/Exercise';
+import { Exercise, ConstraintBoxSize, ScoreResult, Point } from '../types/Exercise';
+import { EventEmitter } from '../utils/EventEmitter';
 
 /**
  * GameManager options
@@ -120,11 +121,12 @@ export class GameManager {
     const PAUSE_DELAY = 120; // ms
     let strokeSoundStarted = false;
 
-    const setupStrokeSoundListeners = (emitter: any) => {
+    const setupStrokeSoundListeners = (emitter: EventEmitter): void => {
       emitter.on('stroke-started', () => {
         strokeSoundStarted = false;
       });
-      emitter.on('point-added', (point: any) => {
+      emitter.on('point-added', (...args) => {
+        const point = args[0] as Point;
         if (point && typeof point.y === 'number') {
           if (!strokeSoundStarted) {
             this.audioManager.startStrokeSound(point.y);
@@ -133,14 +135,18 @@ export class GameManager {
             this.audioManager.updateStrokeSound(point.y);
           }
           this.audioManager.resumeStrokeSound();
-          if (strokePauseTimer) clearTimeout(strokePauseTimer);
+          if (strokePauseTimer) {
+            clearTimeout(strokePauseTimer);
+          }
           strokePauseTimer = setTimeout(() => {
             this.audioManager.pauseStrokeSound();
           }, PAUSE_DELAY);
         }
       });
       emitter.on('stroke-completed', () => {
-        if (strokePauseTimer) clearTimeout(strokePauseTimer);
+        if (strokePauseTimer) {
+          clearTimeout(strokePauseTimer);
+        }
         this.audioManager.pauseStrokeSound();
         this.audioManager.stopStrokeSound();
         this.audioManager.playStrokeSound(); // keep the short beep for stroke end
@@ -265,7 +271,7 @@ export class GameManager {
     this.uiManager.showExampleDrawing(exercise.adultDrawing);
 
     // After animation completes, start the first attempt and remove this listener
-    const onExampleComplete = () => {
+    const onExampleComplete = (): void => {
       this.startNextAttempt();
       this.uiManager.off('example-animation-complete', onExampleComplete);
     };
