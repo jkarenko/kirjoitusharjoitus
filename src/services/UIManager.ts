@@ -739,11 +739,17 @@ export class UIManager extends EventEmitter {
         // Move to first point
         const [first, ...rest] = stroke.points;
         context.moveTo(offsetX + (first.x - minX) * scale, offsetY + (first.y - minY) * scale);
+        // Emit synthetic stroke-started event
+        this.emit('stroke-started', stroke);
         for (const pt of rest) {
           context.lineTo(offsetX + (pt.x - minX) * scale, offsetY + (pt.y - minY) * scale);
           context.stroke();
+          // Emit synthetic point-added event
+          this.emit('point-added', pt);
           await new Promise(res => setTimeout(res, 20));
         }
+        // Emit synthetic stroke-completed event
+        this.emit('stroke-completed', stroke);
         // Pause between strokes
         await new Promise(res => setTimeout(res, 200));
       }
